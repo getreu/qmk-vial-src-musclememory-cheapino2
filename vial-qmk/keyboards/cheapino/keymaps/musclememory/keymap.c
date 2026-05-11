@@ -98,19 +98,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  * TAP DANCE DEFINITION
  *
  */
-// TD_CMENU Logic:
-// - Base Layer: Single Tap/Hold = KC_APP | Double Tap = Toggle L2
+// - Base Layer: Single Tap = KC_APP | Hold = Activate L2 momentarily | Double Tap = Toggle L2
 // - Other Layers: Any interaction = layer_clear() (Reset to Base)
 enum { TD_CMENU };
+
 void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
-    // Check if we are currently on the Base Layer
     if (get_highest_layer(layer_state) == _BASE) {
         if (state->pressed) {
-            tap_code16(KC_APP);
+            // Hold = Momentarily activate L2
+            layer_on(_L2);
         } else {
+            // Tapped
             if (state->count == 1) {
                 tap_code16(KC_APP);
-            } else if (state->count == 2) {
+            } else if (state->count >= 2) {
                 layer_invert(_L2);
             }
         }
@@ -119,8 +120,17 @@ void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
         layer_clear();
     }
 }
+
+void td_cmenu_reset(tap_dance_state_t *state, void *user_data) {
+    // Only deactivate if count=1 AND we're on L2
+    // (count=1 & on L2 means it was a hold, not a toggle)
+    if (state->count == 1 && get_highest_layer(layer_state) == _L2) {
+        layer_off(_L2);
+    }
+}
+
 tap_dance_action_t tap_dance_actions[] = {
-    [TD_CMENU] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_cmenu_finished, NULL)
+    [TD_CMENU] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_cmenu_finished, td_cmenu_reset)
 };
 
 // PER-KEY TAPPING TERM

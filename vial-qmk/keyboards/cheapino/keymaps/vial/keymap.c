@@ -181,13 +181,18 @@ void eeconfig_init_user(void) {
     // 4. Load Dynamic Tap Dances
     vial_tap_dance_entry_t td = {0};
 
-    // TD 0: APP / TG(_L2)
-    td.on_tap = KC_APP; td.on_hold = KC_APP; td.on_double_tap = TG(_L2);
+    // Excerpt from: void eeconfig_init_user( )
+    // TD 0: APP / MO(_L2) momentary / TG(_L2) toggle
+    td.on_tap = KC_APP;
+    td.on_hold = MO(_L2);           // momentary L2
+    td.on_double_tap = TG(_L2);
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(0, &td);
 
-    // TD 1: TO(0) / TG(_L2)
-    td.on_tap = TO(0); td.on_hold = KC_APP; td.on_double_tap = TG(_L2);
+    // TD 1: TO(0) / MO(_L2) momentary / TG(_L2) toggle
+    td.on_tap = TO(0);
+    td.on_hold = MO(_L2);           // momentary L2
+    td.on_double_tap = TG(_L2);
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(1, &td);
 
