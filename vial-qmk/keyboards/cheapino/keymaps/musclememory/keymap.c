@@ -100,7 +100,119 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  */
 // - Base Layer: Single Tap = KC_APP | Hold = Activate L2 momentarily | Double Tap = Toggle L2
 // - Other Layers: Any interaction = layer_clear() (Reset to Base)
-enum { TD_CMENU };
+enum { TD_CMENU, TD_KP_PLUS, TD_KP_MINUS, TD_KP_DOT, TD_KP_0 };
+
+static bool kp_0_held = false;
+static bool kp_peql_held = false;
+
+void td_kp_0_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->pressed) {
+        if (state->count == 1) {
+            kp_peql_held = true;
+            register_code(KC_PEQL);
+        } else {
+            kp_0_held = true;
+            register_code(KC_KP_0);
+        }
+    } else {
+        tap_code(KC_KP_0);
+    }
+}
+
+void td_kp_0_reset(tap_dance_state_t *state, void *user_data) {
+    if (kp_peql_held) {
+        unregister_code(KC_PEQL);
+        kp_peql_held = false;
+    }
+    if (kp_0_held) {
+        unregister_code(KC_KP_0);
+        kp_0_held = false;
+    }
+}
+
+static bool kp_dot_held = false;
+static bool kp_pcmm_held = false;
+
+void td_kp_dot_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->pressed) {
+        if (state->count == 1) {
+            kp_pcmm_held = true;
+            register_code(KC_PCMM);
+        } else {
+            kp_dot_held = true;
+            register_code(KC_KP_DOT);
+        }
+    } else {
+        tap_code(KC_KP_DOT);
+    }
+}
+
+void td_kp_dot_reset(tap_dance_state_t *state, void *user_data) {
+    if (kp_pcmm_held) {
+        unregister_code(KC_PCMM);
+        kp_pcmm_held = false;
+    }
+    if (kp_dot_held) {
+        unregister_code(KC_KP_DOT);
+        kp_dot_held = false;
+    }
+}
+
+static bool kp_minus_held = false;
+static bool kp_psls_held = false;
+
+void td_kp_minus_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->pressed) {
+        if (state->count == 1) {
+            kp_psls_held = true;
+            register_code(KC_PSLS);
+        } else {
+            kp_minus_held = true;
+            register_code(KC_KP_MINUS);
+        }
+    } else {
+        tap_code(KC_KP_MINUS);
+    }
+}
+
+void td_kp_minus_reset(tap_dance_state_t *state, void *user_data) {
+    if (kp_psls_held) {
+        unregister_code(KC_PSLS);
+        kp_psls_held = false;
+    }
+    if (kp_minus_held) {
+        unregister_code(KC_KP_MINUS);
+        kp_minus_held = false;
+    }
+}
+
+static bool kp_plus_held = false;
+static bool kp_past_held = false;
+
+void td_kp_plus_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->pressed) {
+        if (state->count == 1) {
+            kp_past_held = true;
+            register_code(KC_PAST);
+        } else {
+            kp_plus_held = true;
+            register_code(KC_KP_PLUS);
+        }
+    } else {
+        tap_code(KC_KP_PLUS);
+    }
+}
+
+void td_kp_plus_reset(tap_dance_state_t *state, void *user_data) {
+    if (kp_past_held) {
+        unregister_code(KC_PAST);
+        kp_past_held = false;
+    }
+    if (kp_plus_held) {
+        unregister_code(KC_KP_PLUS);
+        kp_plus_held = false;
+    }
+}
 
 void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
     if (get_highest_layer(layer_state) == _BASE) {
@@ -130,7 +242,11 @@ void td_cmenu_reset(tap_dance_state_t *state, void *user_data) {
 }
 
 tap_dance_action_t tap_dance_actions[] = {
-    [TD_CMENU] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_cmenu_finished, td_cmenu_reset)
+    [TD_CMENU]    = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_cmenu_finished, td_cmenu_reset),
+    [TD_KP_PLUS]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_kp_plus_finished, td_kp_plus_reset),
+    [TD_KP_MINUS] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_kp_minus_finished, td_kp_minus_reset),
+    [TD_KP_DOT]   = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_kp_dot_finished, td_kp_dot_reset),
+    [TD_KP_0]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL, td_kp_0_finished, td_kp_0_reset)
 };
 
 // PER-KEY TAPPING TERM
@@ -194,9 +310,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 [_L2] = LAYOUT_split_3x5_3(
-    KC_NO,          KC_NO,          KC_NO,           KC_PEQL,        KC_PAST, KC_TRNS, KC_KP_PLUS,          KC_KP_7,         KC_KP_8,          KC_KP_9,         KC_KP_0,
-    LSFT_T(KC_ESC), RALT_T(KC_INS), LT(_L3, KC_DEL), LCTL_T(KC_TAB), LALT_T(KC_BSPC),  LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
-    KC_NO,          KC_NO,          KC_NO,           RGUI_T(KC_NO),  KC_PSLS,          KC_KP_MINUS,         RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         KC_KP_DOT,
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS, KC_TRNS, TD(TD_KP_PLUS),      KC_KP_7,         KC_KP_8,          KC_KP_9,         TD(TD_KP_0),
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         TD(TD_KP_MINUS),     RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         TD(TD_KP_DOT),
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 

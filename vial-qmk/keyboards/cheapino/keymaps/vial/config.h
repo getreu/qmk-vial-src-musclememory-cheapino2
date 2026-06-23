@@ -11,7 +11,7 @@
 #define VIAL_UNLOCK_COMBO_COLS { 10, 4 }
 
 // Vial tap dance and combo support
-#define VIAL_TAP_DANCE_ENTRIES 6
+#define VIAL_TAP_DANCE_ENTRIES 10
 #define VIAL_COMBO_ENTRIES 12
 
 // Support 8 layers (BASE through L7)

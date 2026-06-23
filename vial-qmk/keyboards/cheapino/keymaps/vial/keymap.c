@@ -200,6 +200,26 @@ void eeconfig_init_user(void) {
     td.on_tap = TO(0); td.on_hold = MO(_L6); td.on_double_tap = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(2, &td);
+
+    // TD 3: KC_KP_PLUS (tap) / KC_PAST (hold) / KC_KP_PLUS (tap-hold, repeating)
+    td.on_tap = KC_KP_PLUS; td.on_hold = KC_PAST; td.on_double_tap = KC_NO; td.on_tap_hold = KC_KP_PLUS;
+    td.custom_tapping_term = 200;
+    dynamic_keymap_set_tap_dance(3, &td);
+
+    // TD 4: KC_KP_MINUS (tap) / KC_PSLS (hold) / KC_KP_MINUS (tap-hold, repeating)
+    td.on_tap = KC_KP_MINUS; td.on_hold = KC_PSLS; td.on_double_tap = KC_NO; td.on_tap_hold = KC_KP_MINUS;
+    td.custom_tapping_term = 200;
+    dynamic_keymap_set_tap_dance(4, &td);
+
+    // TD 5: KC_KP_DOT (tap) / KC_PCMM (hold) / KC_KP_DOT (tap-hold, repeating)
+    td.on_tap = KC_KP_DOT; td.on_hold = KC_PCMM; td.on_double_tap = KC_NO; td.on_tap_hold = KC_KP_DOT;
+    td.custom_tapping_term = 200;
+    dynamic_keymap_set_tap_dance(5, &td);
+
+    // TD 6: KC_KP_0 (tap) / KC_PEQL (hold) / KC_KP_0 (tap-hold, repeating)
+    td.on_tap = KC_KP_0; td.on_hold = KC_PEQL; td.on_double_tap = KC_NO; td.on_tap_hold = KC_KP_0;
+    td.custom_tapping_term = 200;
+    dynamic_keymap_set_tap_dance(6, &td);
 #endif
 
     // Finalize the sync
@@ -231,9 +251,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 [_L2] = LAYOUT_split_3x5_3(
-    KC_NO,          KC_NO,          KC_NO,           KC_PEQL,        KC_PAST, KC_TRNS, KC_KP_PLUS,          KC_KP_7,         KC_KP_8,          KC_KP_9,         KC_KP_0,
-    LSFT_T(KC_ESC), RALT_T(KC_INS), LT(_L3, KC_DEL), LCTL_T(KC_TAB), LALT_T(KC_BSPC),  LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
-    KC_NO,          KC_NO,          KC_NO,           RGUI_T(KC_NO),  KC_PSLS,          KC_KP_MINUS,         RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         KC_KP_DOT,
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS, KC_TRNS, TD(3),               KC_KP_7,         KC_KP_8,          KC_KP_9,         TD(6),
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         TD(4),               RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         TD(5),
     KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
 ),
 
