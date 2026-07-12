@@ -150,11 +150,17 @@ void eeconfig_init_user(void) {
     combo.output = MO(_L7);
     dynamic_keymap_set_combo(2, &combo);
 
-    // Combo 3: ESC + Backspace -> Toggle Layer 3
+    // Combo 3: ESC + Backspace -> Go to Layer 3
     combo.input[0] = LT(_L6, KC_ESC);
     combo.input[1] = LT(_L5, KC_BSPC);
-    combo.output = TG(_L3);
+    combo.output = TO(_L3);
     dynamic_keymap_set_combo(3, &combo);
+
+    // Combo 6: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
+    combo.input[0] = TD(2);
+    combo.input[1] = LT(_L5, KC_BSPC);
+    combo.output = TO(_L3);
+    dynamic_keymap_set_combo(6, &combo);
 
     // Combo 4 & 5: Outer thumbs -> Caps Lock
     combo.input[0] = OSL(_L4); combo.input[1] = TD(0);
@@ -164,16 +170,6 @@ void eeconfig_init_user(void) {
     combo.input[0] = OSL(_L4); combo.input[1] = TD(1);
     combo.output = KC_CAPS_LOCK;
     dynamic_keymap_set_combo(5, &combo);
-
-    // Combo 6: Q+W+E+T -> Bootloader
-    combo.input[0] = KC_Q; combo.input[1] = KC_W; combo.input[2] = KC_E; combo.input[3] = KC_T;
-    combo.output = QK_BOOT;
-    dynamic_keymap_set_combo(6, &combo);
-
-    // Combo 7: Y+I+O+P -> Bootloader
-    combo.input[0] = KC_Y; combo.input[1] = KC_I; combo.input[2] = KC_O; combo.input[3] = KC_P;
-    combo.output = QK_BOOT;
-    dynamic_keymap_set_combo(7, &combo);
 
 #endif
 
@@ -185,14 +181,14 @@ void eeconfig_init_user(void) {
     // TD 0: APP / MO(_L2) momentary / TG(_L2) toggle
     td.on_tap = KC_APP;
     td.on_hold = MO(_L2);           // momentary L2
-    td.on_double_tap = TG(_L2);
+    td.on_double_tap = TO(_L2);
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(0, &td);
 
     // TD 1: TO(0) / MO(_L2) momentary / TG(_L2) toggle
     td.on_tap = TO(0);
     td.on_hold = MO(_L2);           // momentary L2
-    td.on_double_tap = TG(_L2);
+    td.on_double_tap = TO(_L2);
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(1, &td);
 
@@ -251,7 +247,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 [_L2] = LAYOUT_split_3x5_3(
-    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS, KC_TRNS, TD(3),               KC_KP_7,         KC_KP_8,          KC_KP_9,         TD(6),
+    KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS, KC_TRNS, TD(3),              KC_KP_7,         KC_KP_8,          KC_KP_9,         TD(6),
     KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
     KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         TD(4),               RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         TD(5),
     KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
@@ -267,28 +263,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_L4] = LAYOUT_split_3x5_3(
     KC_F1,          KC_F2,          KC_F3,   KC_F4,           KC_F5,   QK_REBOOT, KC_F6,          KC_F7,          KC_F8,   KC_F9,          KC_F10,
     LSFT_T(KC_F11), RALT_T(KC_F12), KC_F13,  LCTL_T(KC_F14),  LALT_T(KC_F15),     LALT_T(KC_F16), RCTL_T(KC_F17), KC_F18,  RALT_T(KC_F19), RSFT_T(KC_F20),
-    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          KC_NO,
+    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          MO(_L7),
     KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
 ),
 
 [_L5] = LAYOUT_split_3x5_3(
-    KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,  QK_CLEAR_EEPROM,  KC_HOME, KC_DEL,  KC_INS,  KC_END,  KC_BSPC,
+    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,    KC_NO,  KC_HOME, KC_DEL,  KC_INS,  KC_END,  KC_BSPC,
     KC_ESC,  KC_INS,  KC_DEL,  KC_TAB,  KC_BSPC,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            KC_NO,   KC_PGDN, KC_PGUP, KC_NO,   KC_NO,
     KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
 ),
 
 [_L6] = LAYOUT_split_3x5_3(
-    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,  QK_BOOT,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
-    MS_BTN5, MS_BTN1, MS_BTN3, MS_BTN2, MS_BTN4,          MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_BTN1,
-    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, KC_NO,
-    KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
+    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,  KC_NO,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+    MS_BTN5, MS_BTN1, MS_BTN3, MS_BTN2, MS_BTN4,        MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_BTN1,
+    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,          MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, KC_NO,
+    KC_TRNS, TD(2), KC_TRNS,                            KC_TRNS, KC_TRNS, TD(1)
 ),
 
 [_L7] = LAYOUT_split_3x5_3(
-    QK_CLEAR_EEPROM, KC_NO, RGB_VAD, RGB_VAI, RGB_TOG, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO,   KC_NO,
-    QK_BOOT,         KC_NO, RGB_HUD, RGB_HUI, KC_NO,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO,   KC_NO,
-    QK_REBOOT, KC_NO,   RGB_SAD, RGB_SAI, KC_NO,           KC_MPLY, KC_MPRV, KC_MNXT, KC_NO,   KC_NO,
-    KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
+    QK_REBOOT,       KC_NO, RGB_VAD, RGB_VAI, RGB_TOG, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO, KC_NO,
+    QK_BOOT,         KC_NO, RGB_HUD, RGB_HUI, KC_NO,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO, KC_NO,
+    QK_CLEAR_EEPROM, KC_NO, RGB_SAD, RGB_SAI, KC_NO,          KC_MPLY, KC_MPRV, KC_MNXT, KC_NO, KC_NO,
+    KC_TRNS, TD(2), KC_TRNS,                                  KC_TRNS, KC_TRNS, TD(1)
 )
 };

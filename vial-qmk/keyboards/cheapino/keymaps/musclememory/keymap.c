@@ -215,17 +215,15 @@ void td_kp_plus_reset(tap_dance_state_t *state, void *user_data) {
 }
 
 void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
-    if (get_highest_layer(layer_state) == _BASE) {
+    if (!state->pressed && state->count >= 2) {
+        // Double tap always activates L2 exclusively, from any layer
+        layer_move(_L2);
+    } else if (get_highest_layer(layer_state) == _BASE) {
         if (state->pressed) {
             // Hold = Momentarily activate L2
             layer_on(_L2);
         } else {
-            // Tapped
-            if (state->count == 1) {
-                tap_code16(KC_APP);
-            } else if (state->count >= 2) {
-                layer_invert(_L2);
-            }
+            tap_code16(KC_APP);
         }
     } else {
         // If we are on ANY other layer, reset everything to Base
@@ -326,28 +324,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_L4] = LAYOUT_split_3x5_3(
     KC_F1,          KC_F2,          KC_F3,   KC_F4,           KC_F5,   QK_REBOOT, KC_F6,          KC_F7,          KC_F8,   KC_F9,          KC_F10,
     LSFT_T(KC_F11), RALT_T(KC_F12), KC_F13,  LCTL_T(KC_F14),  LALT_T(KC_F15),     LALT_T(KC_F16), RCTL_T(KC_F17), KC_F18,  RALT_T(KC_F19), RSFT_T(KC_F20),
-    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          KC_NO,
+    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          MO(_L7),
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
 [_L5] = LAYOUT_split_3x5_3(
-    KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,  QK_CLEAR_EEPROM,  KC_HOME, KC_DEL,  KC_INS,  KC_END,  KC_BSPC,
+    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,    KC_NO,  KC_HOME, KC_DEL,  KC_INS,  KC_END,  KC_BSPC,
     KC_ESC,  KC_INS,  KC_DEL,  KC_TAB,  KC_BSPC,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            KC_NO,   KC_PGDN, KC_PGUP, KC_NO,   KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
 [_L6] = LAYOUT_split_3x5_3(
-    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,  QK_BOOT,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
+    KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,  KC_NO,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
     MS_BTN5, MS_BTN1, MS_BTN3, MS_BTN2, MS_BTN4,          MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_BTN1,
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
 [_L7] = LAYOUT_split_3x5_3(
-    QK_CLEAR_EEPROM, KC_NO, RGB_VAD, RGB_VAI, RGB_TOG, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO,   KC_NO,
-    QK_BOOT,         KC_NO, RGB_HUD, RGB_HUI, KC_NO,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO,   KC_NO,
-    QK_REBOOT, KC_NO,   RGB_SAD, RGB_SAI, KC_NO,           KC_MPLY, KC_MPRV, KC_MNXT, KC_NO,   KC_NO,
+    QK_REBOOT,       KC_NO, RGB_VAD, RGB_VAI, RGB_TOG, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO, KC_NO,
+    QK_BOOT,         KC_NO, RGB_HUD, RGB_HUI, KC_NO,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO, KC_NO,
+    QK_CLEAR_EEPROM, KC_NO, RGB_SAD, RGB_SAI, KC_NO,          KC_MPLY, KC_MPRV, KC_MNXT, KC_NO, KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 )
 };
@@ -356,7 +354,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * COMBOS
  * Combos allow triggering actions by pressing multiple keys simultaneously.
  * - combo1/2: Trigger Layer 7 (System settings).
- * - combo3: Toggle Layer 3.
+ * - combo3: Go to Layer 3.
  * - combo4/5: Reboot into Bootloader (Flash mode).
  * - combo_caps: Toggle Caps Lock.
  */
@@ -364,16 +362,12 @@ const uint16_t PROGMEM combo1[] = { RGUI_T(KC_M), MT(MOD_LGUI, KC_ENT), COMBO_EN
 const uint16_t PROGMEM combo2[] = { RGUI_T(KC_V), MT(MOD_LGUI, KC_SPC), COMBO_END };
 const uint16_t PROGMEM combo3[] = { LT(_L6, KC_ESC), LT(_L5, KC_BSPC), COMBO_END };
 const uint16_t PROGMEM combo4[] = { LT(_L6, KC_NO), LT(_L5, KC_BSPC), COMBO_END };
-const uint16_t PROGMEM combo5[] = { KC_Q, KC_W, KC_E, KC_T, COMBO_END };
-const uint16_t PROGMEM combo6[] = { KC_Y, KC_I, KC_O, KC_P, COMBO_END };
 const uint16_t PROGMEM combo_caps[] = { OSL(_L4), TD(TD_CMENU), COMBO_END };
 
 combo_t key_combos[] = {
     COMBO(combo1, MO(_L7)),
     COMBO(combo2, MO(_L7)),
-    COMBO(combo3, TG(_L3)),
-    COMBO(combo4, TG(_L3)),
-    COMBO(combo5, QK_BOOT),
-    COMBO(combo6, QK_BOOT),
+    COMBO(combo3, TO(_L3)),
+    COMBO(combo4, TO(_L3)),
     COMBO(combo_caps, KC_CAPS)
 };
