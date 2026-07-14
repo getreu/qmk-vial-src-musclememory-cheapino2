@@ -19,7 +19,7 @@ This firmware implements the [Muscle-memory-friendly home row mods layout](https
 4.  **Flash to Cheapino (RP2040)**:
     *   **Method 1 (Physical Button):** Hold the **BOOTSEL button** on the RP2040 controller while
         plugging in the USB cable.
-    *   **Method 2 (Keycode):** Hold the middle thumb key on the left side and press the rotary knob.
+    *   **Method 2 (Keycode):** Tap the **FN** key (outer left thumb), hold **/** to access Layer 7, then press the **A key** (`QK_BOOT`).
     *   Drag and drop the `.uf2` file onto the `RPI-RP2` drive.
 
 
