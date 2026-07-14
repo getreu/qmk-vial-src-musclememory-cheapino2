@@ -57,16 +57,15 @@ Alternatively, you can use the Vial/QMK repository to compile and flash.
 
 Clearing the EEPROM resets all persistent settings (RGB configurations, Vial keymaps, tap dances, and combos) to the firmware defaults.
 
-In this firmware, the clear function is hard-mapped to specific keys to enable a reset without the GUI:
+In this firmware, `QK_CLEAR_EEPROM` is hard-mapped to the **Z key on Layer 7** (left pinky, bottom row) to allow a reset without the GUI.
 
-1.  **Keycode Position:**
-    *   **Layer 5:** The **Rotary Encoder Press** (the physical button between the halves).
-2.  **Accessing the Layer:**
-    *   **Layer 5:** Hold the **Backspace** thumb key on the right half.
-3.  **Triggering the Reset:**
-    *   **Via Layer 5:** Hold the **Backspace** key and press the **Rotary Encoder** down.
-4.  **Verification:**
-    The device will not automatically reboot. To confirm that the reset was successful, watch for the RGB underglow to return to the default color **a bright red**.
+1.  **Accessing Layer 7:**
+    *   **Combo:** Hold both inner thumb keys simultaneously — **M+Enter** (right half) or **V+Space** (left half).
+    *   **Via FN layer:** Tap the **FN** key (outer left thumb), then hold **/** (bottom-right key, right half).
+2.  **Triggering the Reset:**
+    *   While on Layer 7, press the **Z key**.
+3.  **Verification:**
+    The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
 
 
 ## RGB Lighting & Layer Feedback

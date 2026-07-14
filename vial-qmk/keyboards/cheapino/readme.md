@@ -23,5 +23,9 @@ See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_to
 Enter the bootloader in 3 ways:
 
 * **Bootmagic reset**: Hold down the key at (0,0) in the matrix (usually the top left key or Escape) and plug in the keyboard
-* **Physical reset button**: Briefly press the button on the back of the PCB - some may have pads you must short instead
-* **Keycode in layout**: Press the key mapped to `QK_BOOT` if it is available
+* **Physical reset button**: Briefly press the button on the back of the PCB
+* **Keycode in layout**: Press `QK_BOOT` (Layer 7, A key — left pinky, middle row)
+
+## Clearing EEPROM
+
+Press `QK_CLEAR_EEPROM` (Layer 7, Z key — left pinky, bottom row). The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
