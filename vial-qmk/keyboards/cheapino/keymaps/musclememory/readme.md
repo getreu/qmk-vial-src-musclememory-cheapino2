@@ -26,7 +26,7 @@ This firmware implements the [Muscle memory friendly home row mods layout](https
 4.  **Flash to Cheapino (RP2040):**
     * **Method 1 (Physical Button):** Hold the right button on the RP2040 controller while 
       plugging in the USB cable.
-    *   **Method 2 (Keycode):** Tap the **FN** key (outer left thumb), hold **/** to access Layer 7, then press the **A key** (`QK_BOOT`).
+    *   **Method 2 (Keycode):** Tap the **FN** key (outer left thumb), hold **/** to access Layer 7, then press the **Q key** (`QK_BOOT`).
     * Drag and drop the `.uf2` file onto the `RPI-RP2` drive.
 
 
@@ -57,7 +57,7 @@ Alternatively, you can use the Vial/QMK repository to compile and flash.
 
 Clearing the EEPROM resets all persistent settings (RGB configurations, Vial keymaps, tap dances, and combos) to the firmware defaults.
 
-In this firmware, `QK_CLEAR_EEPROM` is hard-mapped to the **Z key on Layer 7** (left pinky, bottom row) to allow a reset without the GUI.
+In this firmware, `QK_CLEAR_EEPROM` is hard-mapped to the **W key on Layer 7** (left ring, top row) to allow a reset without the GUI.
 
 1.  **Accessing Layer 7:**
     *   **Combo:** Hold both inner thumb keys simultaneously — **M+Enter** (right half) or **V+Space** (left half).

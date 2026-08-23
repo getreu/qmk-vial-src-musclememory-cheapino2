@@ -24,8 +24,8 @@ Enter the bootloader in 3 ways:
 
 * **Bootmagic reset**: Hold down the key at (0,0) in the matrix (usually the top left key or Escape) and plug in the keyboard
 * **Physical reset button**: Briefly press the button on the back of the PCB
-* **Keycode in layout**: Press `QK_BOOT` (Layer 7, A key — left pinky, middle row)
+* **Keycode in layout**: Press `QK_BOOT` (Layer 7, Q key — left pinky, top row)
 
 ## Clearing EEPROM
 
-Press `QK_CLEAR_EEPROM` (Layer 7, Z key — left pinky, bottom row). The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
+Press `QK_CLEAR_EEPROM` (Layer 7, W key — left ring, top row). The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
