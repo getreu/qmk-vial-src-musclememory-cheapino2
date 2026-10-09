@@ -263,9 +263,10 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         case LT(_L5, KC_BSPC):
             return 250;
 
-        // Fallback to the default value defined in keyboard.json or config.h
+        // Fall back to TAPPING_TERM from config.h.  (This used to be a
+        // hardcoded 200 under a comment claiming it was a fallback.)
         default:
-            return 200;
+            return TAPPING_TERM;
     }
 }
 
