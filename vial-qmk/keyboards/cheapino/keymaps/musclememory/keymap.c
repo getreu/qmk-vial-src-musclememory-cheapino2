@@ -198,14 +198,25 @@ void td_kp_plus_reset(tap_dance_state_t *state, void *user_data) {
     }
 }
 
+// True while td_cmenu_finished() has switched _L2 on as a momentary layer.
+// Tracking this explicitly is necessary because get_highest_layer() reports
+// a higher layer when one is active at release time: hold [Compose] for
+// momentary numpad, then reach [D]/[K] (reachable -- _L2's left half is
+// transparent) to raise _L3, release [Compose] first -- the highest layer
+// is now _L3, so a get_highest_layer()==_L2 check never fires and the
+// numpad stays on forever.
+static bool td_cmenu_momentary_l2 = false;
+
 void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
     if (!state->pressed && state->count >= 2) {
         // Double tap always activates L2 exclusively, from any layer
+        td_cmenu_momentary_l2 = false;
         layer_move(_L2);
     } else if (get_highest_layer(layer_state) == _BASE) {
         if (state->pressed) {
             // Hold = Momentarily activate L2
             layer_on(_L2);
+            td_cmenu_momentary_l2 = true;
         } else {
             tap_code16(KC_APP);
         }
@@ -216,10 +227,9 @@ void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
 }
 
 void td_cmenu_reset(tap_dance_state_t *state, void *user_data) {
-    // Only deactivate if count=1 AND we're on L2
-    // (count=1 & on L2 means it was a hold, not a toggle)
-    if (state->count == 1 && get_highest_layer(layer_state) == _L2) {
+    if (td_cmenu_momentary_l2) {
         layer_off(_L2);
+        td_cmenu_momentary_l2 = false;
     }
 }
 
@@ -326,6 +336,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     OSL(_L4), LT(_L6, KC_ESC), MT(MOD_LGUI, KC_SPC), MT(MOD_LGUI, KC_ENT), LT(_L5, KC_BSPC), TD(TD_CMENU)
 ),
 
+// _L1 is intentionally unused and kept only to preserve layer numbering:
+// renumbering would invalidate the published .vil and every Vial screenshot.
 [_L1] = LAYOUT_split_3x5_3(
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,

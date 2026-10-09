@@ -118,15 +118,14 @@ void matrix_scan_user(void) {
 }
 
 /**
- * EEPROM INITIALIZATION - Set Default Combos and Tap Dances
- * This runs when EEPROM is reset (first flash or reset command)
+ * EEPROM INITIALIZATION - Set Default Combos, Tap Dances and Encoder Map
+ * This runs when EEPROM is reset (first flash or reset command).
  *
- * Pattern: Set up defaults just like in musclememory, but using Vial's dynamic system.
- * Combos and tap dances will be stored in EEPROM and can be reconfigured via Vial GUI.
- */
-/**
- * EEPROM INITIALIZATION - Full Vial & RGB Integration
- * This runs when EEPROM is reset to load your screenshot defaults.
+ * Pattern: set up defaults just like in musclememory, but using Vial's
+ * dynamic system -- combos, tap dances and the encoder map are stored in
+ * EEPROM and can be reconfigured via the Vial GUI.  RGB is deliberately not
+ * seeded here: keyboard_post_init_user() already reads whatever is
+ * persisted, and duplicating that here would fight it.
  */
 #if defined(VIAL_COMBO_ENABLE) || defined(VIAL_TAP_DANCE_ENABLE)
 void eeconfig_init_user(void) {
@@ -185,6 +184,7 @@ void eeconfig_init_user(void) {
     td.on_tap = KC_APP;
     td.on_hold = MO(_L2);           // momentary L2
     td.on_double_tap = TO(_L2);
+    td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(0, &td);
 
@@ -192,11 +192,12 @@ void eeconfig_init_user(void) {
     td.on_tap = TO(0);
     td.on_hold = MO(_L2);           // momentary L2
     td.on_double_tap = TO(_L2);
+    td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(1, &td);
 
     // TD 2: TO(0) / MO(_L6)
-    td.on_tap = TO(0); td.on_hold = MO(_L6); td.on_double_tap = KC_NO;
+    td.on_tap = TO(0); td.on_hold = MO(_L6); td.on_double_tap = KC_NO; td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(2, &td);
 
