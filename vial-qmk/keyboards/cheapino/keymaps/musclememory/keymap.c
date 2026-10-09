@@ -358,17 +358,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * - combo3: Go to Layer 3.
  * - combo4/5: Reboot into Bootloader (Flash mode).
  * - combo_caps: Toggle Caps Lock.
+ * - combo_numpad: Go to Layer 2 (numpad).
  */
 const uint16_t PROGMEM combo1[] = { RGUI_T(KC_M), MT(MOD_LGUI, KC_ENT), COMBO_END };
 const uint16_t PROGMEM combo2[] = { RGUI_T(KC_V), MT(MOD_LGUI, KC_SPC), COMBO_END };
 const uint16_t PROGMEM combo3[] = { LT(_L6, KC_ESC), LT(_L5, KC_BSPC), COMBO_END };
 const uint16_t PROGMEM combo4[] = { LT(_L6, KC_NO), LT(_L5, KC_BSPC), COMBO_END };
 const uint16_t PROGMEM combo_caps[] = { OSL(_L4), TD(TD_CMENU), COMBO_END };
+const uint16_t PROGMEM combo_numpad[] = { KC_COMM, KC_DOT, COMBO_END };
 
 combo_t key_combos[] = {
     COMBO(combo1, MO(_L7)),
     COMBO(combo2, MO(_L7)),
     COMBO(combo3, TO(_L3)),
     COMBO(combo4, TO(_L3)),
-    COMBO(combo_caps, KC_CAPS)
+    COMBO(combo_caps, KC_CAPS),
+    COMBO(combo_numpad, TO(_L2))
 };

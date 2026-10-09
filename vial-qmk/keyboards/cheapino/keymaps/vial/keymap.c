@@ -171,6 +171,12 @@ void eeconfig_init_user(void) {
     combo.output = KC_CAPS_LOCK;
     dynamic_keymap_set_combo(5, &combo);
 
+    // Combo 7: Comma + Dot -> Go to Layer 2 (numpad)
+    combo.input[0] = KC_COMM;
+    combo.input[1] = KC_DOT;
+    combo.output = TO(_L2);
+    dynamic_keymap_set_combo(7, &combo);
+
 #endif
 
 #ifdef VIAL_TAP_DANCE_ENABLE
