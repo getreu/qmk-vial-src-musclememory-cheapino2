@@ -132,50 +132,44 @@ void eeconfig_init_user(void) {
     // 2. Load Dynamic Combos (These write to EEPROM)
     vial_combo_entry_t combo = {0};
 
-    // Combo 0: Space + Enter -> Layer 7
-    combo.input[0] = LGUI_T(KC_SPC);
-    combo.input[1] = LGUI_T(KC_ENT);
-    combo.output = MO(_L7);
-    dynamic_keymap_set_combo(0, &combo);
-
-    // Combo 1: V + Space -> Layer 7
+    // Combo 0: V + Space -> Layer 7
     combo.input[0] = RGUI_T(KC_V);
     combo.input[1] = LGUI_T(KC_SPC);
     combo.output = MO(_L7);
-    dynamic_keymap_set_combo(1, &combo);
+    dynamic_keymap_set_combo(0, &combo);
 
-    // Combo 2: M + Enter -> Layer 7
+    // Combo 1: M + Enter -> Layer 7
     combo.input[0] = RGUI_T(KC_M);
     combo.input[1] = LGUI_T(KC_ENT);
     combo.output = MO(_L7);
-    dynamic_keymap_set_combo(2, &combo);
+    dynamic_keymap_set_combo(1, &combo);
 
-    // Combo 3: ESC + Backspace -> Go to Layer 3
+    // Combo 2: ESC + Backspace -> Go to Layer 3
     combo.input[0] = LT(_L6, KC_ESC);
     combo.input[1] = LT(_L5, KC_BSPC);
     combo.output = TO(_L3);
-    dynamic_keymap_set_combo(3, &combo);
+    dynamic_keymap_set_combo(2, &combo);
 
-    // Combo 6: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
+    // Combo 5: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
     combo.input[0] = TD(2);
     combo.input[1] = LT(_L5, KC_BSPC);
     combo.output = TO(_L3);
-    dynamic_keymap_set_combo(6, &combo);
+    dynamic_keymap_set_combo(5, &combo);
 
-    // Combo 4 & 5: Outer thumbs -> Caps Lock
+    // Combo 3 & 4: Outer thumbs -> Caps Lock
     combo.input[0] = OSL(_L4); combo.input[1] = TD(0);
     combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(4, &combo);
+    dynamic_keymap_set_combo(3, &combo);
 
     combo.input[0] = OSL(_L4); combo.input[1] = TD(1);
     combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(5, &combo);
+    dynamic_keymap_set_combo(4, &combo);
 
-    // Combo 7: Comma + Dot -> Go to Layer 2 (numpad)
+    // Combo 6: Comma + Dot -> Go to Layer 2 (numpad)
     combo.input[0] = KC_COMM;
     combo.input[1] = KC_DOT;
     combo.output = TO(_L2);
-    dynamic_keymap_set_combo(7, &combo);
+    dynamic_keymap_set_combo(6, &combo);
 
 #endif
 
