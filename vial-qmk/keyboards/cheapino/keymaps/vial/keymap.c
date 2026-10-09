@@ -221,6 +221,20 @@ void eeconfig_init_user(void) {
     dynamic_keymap_set_tap_dance(6, &td);
 #endif
 
+#ifdef ENCODER_MAP_ENABLE
+    // 5. Load Dynamic Encoder Map.  This is the part that actually runs on
+    // this keymap -- see the comment on the static encoder_map[] above.
+    // Volume everywhere, brightness on _L7, matching musclememory.
+    for (uint8_t layer = 0; layer < DYNAMIC_KEYMAP_LAYER_COUNT; layer++) {
+        dynamic_keymap_set_encoder(layer, 0, false, KC_TRNS);
+        dynamic_keymap_set_encoder(layer, 0, true, KC_TRNS);
+    }
+    dynamic_keymap_set_encoder(_BASE, 0, false, KC_VOLD);
+    dynamic_keymap_set_encoder(_BASE, 0, true, KC_VOLU);
+    dynamic_keymap_set_encoder(_L7, 0, false, KC_BRID);
+    dynamic_keymap_set_encoder(_L7, 0, true, KC_BRIU);
+#endif
+
     // Finalize the sync
     vial_init();
 }
@@ -291,3 +305,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TRNS, TD(2), KC_TRNS,                                    KC_TRNS, KC_TRNS, TD(1)
 )
 };
+
+/**
+ * ENCODER
+ * Static factory-default map, same as musclememory. On this keymap it is
+ * NOT what actually runs: with VIAL_ENABLE, quantum/dynamic_keymap.c
+ * installs a strong keycode_at_encodermap_location() that reads
+ * exclusively from EEPROM, bypassing this array at runtime entirely. It is
+ * still required to exist (keymap_introspection.c's raw accessor indexes
+ * it unconditionally whenever ENCODER_MAP_ENABLE is on) and is what a
+ * fresh Vial GUI "factory defaults" view would show. The values that
+ * actually take effect are seeded into EEPROM below, in
+ * eeconfig_init_user().
+ */
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [_BASE] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU) },
+    [_L1]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L2]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L3]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L4]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L5]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L6]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L7]   = { ENCODER_CCW_CW(KC_BRID, KC_BRIU) },
+};
+#endif

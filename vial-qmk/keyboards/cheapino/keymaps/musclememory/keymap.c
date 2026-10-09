@@ -377,6 +377,26 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 /**
+ * ENCODER
+ * fix_encoder_action() in cheapino.c injects the rotation events; without a
+ * consumer they were discarded.  Index 0 is the only encoder.  Volume
+ * everywhere, brightness on the system layer.  KC_TRNS on every other layer
+ * falls through to the base layer's volume binding.
+ */
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [_BASE] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU) },
+    [_L1]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L2]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L3]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L4]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L5]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L6]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L7]   = { ENCODER_CCW_CW(KC_BRID, KC_BRIU) },
+};
+#endif
+
+/**
  * COMBOS
  * Combos allow triggering actions by pressing multiple keys simultaneously.
  * - combo1/2: Trigger Layer 7 (System settings).
