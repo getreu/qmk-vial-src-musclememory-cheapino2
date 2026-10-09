@@ -15,6 +15,26 @@
 // get_tapping_term() in the keymap uses this value as its default branch.
 #define TAPPING_TERM 200
 
+// A tap-hold key on a chordal_hold_layout 'L'/'R' position never resolves to
+// its modifier/layer function on a timeout alone: 5 seconds is far longer
+// than any typing pause, so in practice the only way it settles as a hold is
+// a chordal-hold interrupt -- i.e. an opposite-hand key (or one of the two
+// [D]/[K] same-hand exceptions in chordal_hold.c).  Anything else, including
+// a deliberate solo hold with nothing else pressed, falls through to a plain
+// tap.  Chordal hold's own interrupt-based decision is unaffected by this: it
+// always resolves immediately, independent of how long the tapping term is.
+// Used by musclememory/keymap.c's get_tapping_term(). Kept at keyboard level
+// rather than duplicated, for whenever a second keymap can use it too.
+//
+// NOT applied to the vial keymap: quantum/vial.c defines its own strong,
+// unconditional get_tapping_term() whenever VIAL_ENABLE=yes (it backs
+// Vial-GUI-configurable per-tap-dance timing), which collides with any
+// keymap-level definition at link time. Unlike the QMK_SETTINGS/
+// get_chordal_hold() collision this isn't gated by a build flag, so it can't
+// be sidestepped without patching vial-qmk itself. Until that's worth doing,
+// the vial keymap keeps the plain flat TAPPING_TERM for these keys.
+#define HOME_ROW_MOD_TERM 5000
+
 // Force these values regardless of what the JSON or other files say
 #ifdef MOUSEKEY_ENABLE
     #undef MOUSEKEY_INTERVAL

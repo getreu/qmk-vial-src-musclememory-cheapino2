@@ -263,9 +263,19 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         case LT(_L5, KC_BSPC):
             return 250;
 
-        // Fall back to TAPPING_TERM from config.h.  (This used to be a
-        // hardcoded 200 under a comment claiming it was a fallback.)
+        // Everything else: any tap-hold key whose matrix position carries a
+        // hand ('L'/'R') in chordal_hold_layout gets HOME_ROW_MOD_TERM,
+        // regardless of which layer redefines it there (e.g. _L3's [F]
+        // position is LCTL_T(KC_TAB), _L2's is LALT_T(KC_NUM_LOCK) -- both
+        // still that same matrix position).  Checking position instead of
+        // keycode means this can't silently miss a layer's own variant.
+        // Thumb/center positions ('*') fall through to TAPPING_TERM.
         default:
+            if (chordal_hold_handedness(record->event.key) != '*') {
+                return HOME_ROW_MOD_TERM;
+            }
+            // Fall back to TAPPING_TERM from config.h.  (This used to be a
+            // hardcoded 200 under a comment claiming it was a fallback.)
             return TAPPING_TERM;
     }
 }
