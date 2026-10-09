@@ -15,14 +15,11 @@
 // get_tapping_term() in the keymap uses this value as its default branch.
 #define TAPPING_TERM 200
 
-// Decided 2026-10-09, kept after a soak on musclememory: home row mods only
-// ever fire their modifier/layer function on an opposite-hand chord. Still
-// gated behind this one #define, not because it's in question, but because
-// commenting it out is a verified-working full rollback to the plain flat
-// TAPPING_TERM Phase 3A originally shipped (and what the vial keymap still
-// uses unconditionally, per the note below) -- cheap insurance, not
-// indecision.
-#define HOME_ROW_MOD_OPPOSITE_HAND_ONLY
+// Decided 2026-10-09: disabled. Plain 200ms for every key -- same as the
+// vial keymap already had unconditionally -- works well enough; the
+// opposite-hand-only guarantee below wasn't worth its mouse+modifier cost.
+// Re-enable by uncommenting the next line if that changes again.
+// #define HOME_ROW_MOD_OPPOSITE_HAND_ONLY
 
 // A tap-hold key on a chordal_hold_layout 'L'/'R' position only resolves to
 // its modifier/layer function via a chordal-hold interrupt -- i.e. an
