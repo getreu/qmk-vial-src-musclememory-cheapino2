@@ -15,14 +15,32 @@
 // get_tapping_term() in the keymap uses this value as its default branch.
 #define TAPPING_TERM 200
 
-// A tap-hold key on a chordal_hold_layout 'L'/'R' position never resolves to
-// its modifier/layer function on a timeout alone: 5 seconds is far longer
-// than any typing pause, so in practice the only way it settles as a hold is
-// a chordal-hold interrupt -- i.e. an opposite-hand key (or one of the two
-// [D]/[K] same-hand exceptions in chordal_hold.c).  Anything else, including
-// a deliberate solo hold with nothing else pressed, falls through to a plain
-// tap.  Chordal hold's own interrupt-based decision is unaffected by this: it
-// always resolves immediately, independent of how long the tapping term is.
+// Decided 2026-10-09, kept after a soak on musclememory: home row mods only
+// ever fire their modifier/layer function on an opposite-hand chord. Still
+// gated behind this one #define, not because it's in question, but because
+// commenting it out is a verified-working full rollback to the plain flat
+// TAPPING_TERM Phase 3A originally shipped (and what the vial keymap still
+// uses unconditionally, per the note below) -- cheap insurance, not
+// indecision.
+#define HOME_ROW_MOD_OPPOSITE_HAND_ONLY
+
+// A tap-hold key on a chordal_hold_layout 'L'/'R' position only resolves to
+// its modifier/layer function via a chordal-hold interrupt -- i.e. an
+// opposite-hand key (or one of the two [D]/[K] same-hand exceptions in
+// chordal_hold.c) -- as long as that interrupt arrives within this window.
+// Chordal hold's own interrupt-based decision is unaffected by the window's
+// size: it always resolves immediately, same-hand-forces-tap either way.
+// What the window's size actually trades off is the timeout fallback, for
+// when nothing interrupts at all:
+//   - Wider (e.g. 5000ms) protects even a hesitant same-hand pause from
+//     misfiring as a modifier, but makes a solo hold (e.g. [Ctrl] alone,
+//     then reaching for an external mouse) impractical -- nothing short of
+//     holding for the full window ever commits it, and a mouse click/scroll
+//     is invisible to QMK's matrix, so it can never serve as the interrupt
+//     either.
+//   - 500ms keeps same-hand rolls safe at any realistic typing pace (real
+//     hesitation rarely exceeds it) while letting a deliberate half-second
+//     hold-then-mouse gesture still commit via the plain timeout.
 // Used by musclememory/keymap.c's get_tapping_term(). Kept at keyboard level
 // rather than duplicated, for whenever a second keymap can use it too.
 //
@@ -33,7 +51,7 @@
 // get_chordal_hold() collision this isn't gated by a build flag, so it can't
 // be sidestepped without patching vial-qmk itself. Until that's worth doing,
 // the vial keymap keeps the plain flat TAPPING_TERM for these keys.
-#define HOME_ROW_MOD_TERM 5000
+#define HOME_ROW_MOD_TERM 500
 
 // Force these values regardless of what the JSON or other files say
 #ifdef MOUSEKEY_ENABLE

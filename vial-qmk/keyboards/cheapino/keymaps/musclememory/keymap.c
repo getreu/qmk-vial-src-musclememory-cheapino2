@@ -270,10 +270,20 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         // still that same matrix position).  Checking position instead of
         // keycode means this can't silently miss a layer's own variant.
         // Thumb/center positions ('*') fall through to TAPPING_TERM.
+        //
+        // Tap dances are excluded even though e.g. the numpad's TD_KP_PLUS/
+        // MINUS/DOT/0 sit on 'R' positions: process_tap_dance.c also calls
+        // get_tapping_term() to time its own inter-tap window, which has
+        // nothing to do with chordal hold's opposite-hands decision. Without
+        // this check those four keys would (and did) inherit
+        // HOME_ROW_MOD_TERM and turn noticeably sluggish.
         default:
-            if (chordal_hold_handedness(record->event.key) != '*') {
+#ifdef HOME_ROW_MOD_OPPOSITE_HAND_ONLY
+            if (!IS_QK_TAP_DANCE(keycode) &&
+                chordal_hold_handedness(record->event.key) != '*') {
                 return HOME_ROW_MOD_TERM;
             }
+#endif
             // Fall back to TAPPING_TERM from config.h.  (This used to be a
             // hardcoded 200 under a comment claiming it was a fallback.)
             return TAPPING_TERM;
