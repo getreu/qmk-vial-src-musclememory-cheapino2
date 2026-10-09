@@ -6,24 +6,26 @@
 
 // This is to keep state between callbacks, when it is 0 the
 // initial RGB flash is finished
-uint8_t _hue_countdown = 50;
+static uint8_t _hue_countdown = 50;
 
 // These are to keep track of user selected color, so we
 // can restore it after RGB flash
-uint8_t _hue;
-uint8_t _saturation;
-uint8_t _value;
+static uint8_t _hue;
+static uint8_t _saturation;
+static uint8_t _value;
 
 // Do a little 2.5 seconds display of the different colors
 // Use the deferred executor so the LED flash dance does not
 // stop us from using the keyboard.
 // https://docs.qmk.fm/#/custom_quantum_functions?id=deferred-executor-registration
 uint32_t flash_led(uint32_t next_trigger_time, void *cb_arg) {
-    rgblight_sethsv(_hue_countdown * 5, 230, 70);
+    // _noeeprom: the persisting variant was writing the emulated EEPROM
+    // 50 times on every single boot.
+    rgblight_sethsv_noeeprom(_hue_countdown * 5, 230, 70);
     _hue_countdown--;
     if (_hue_countdown == 0) {
         // Finished, reset to user chosen led color
-        rgblight_sethsv(_hue, _saturation, _value);
+        rgblight_sethsv_noeeprom(_hue, _saturation, _value);
         return 0;
     } else {
         return 50;
@@ -43,6 +45,11 @@ void keyboard_post_init_kb(void) {
 
     // Flash a little on start
     defer_exec(50, flash_led, NULL);
+
+    // Mandatory.  Overriding keyboard_post_init_kb() without this breaks
+    // QMK's weak function chain, which is why the keymaps'
+    // keyboard_post_init_user() has never run.
+    keyboard_post_init_user();
 }
 
 // This is just to be able to declare constants as they appear in the qmk console

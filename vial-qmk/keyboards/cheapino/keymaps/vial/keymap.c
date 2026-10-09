@@ -53,8 +53,16 @@ enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
  * Initialize RGB color capture
  */
 void keyboard_post_init_user(void) {
-    rgblight_enable_noeeprom();
+    // Force static light, so that an animation mode stored in EEPROM cannot
+    // fight the per-layer colours in layer_state_set_user().
     rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+
+    // Seed the base layer colour from the persisted RGB settings.  Without
+    // this, old_color stays {0,0,0} and the base layer goes dark the first
+    // time we return to it.
+    old_color.h = rgblight_get_hue();
+    old_color.s = rgblight_get_sat();
+    old_color.v = rgblight_get_val();
 }
 
 /**
@@ -90,28 +98,23 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 /**
- * Capture color changes when on base layer
+ * Keep old_color mirroring the live colour while on _L7, so that leaving the
+ * layer restores exactly what it was showing.
+ *
+ * This can't be done in post_process_record_user() for RGB_HUI/HUD/SAI/SAD/
+ * VAI/VAD: process_underglow() returns false after applying each of those
+ * (the normal QMK pattern for a keycode that needs no further
+ * register/unregister handling), and QMK's process_record() does an early
+ * return on a false result -- skipping post_process_record_quantum(), and
+ * therefore post_process_record_user(), entirely for that keypress. Polling
+ * here is the one hook that still sees the change before the layer is left.
  */
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Update saved color when RGB is adjusted
-    if (record->event.pressed) {
-        switch (keycode) {
-            case RGB_TOG:
-            case RGB_MOD:
-            case RGB_RMOD:
-            case RGB_HUI:
-            case RGB_HUD:
-            case RGB_SAI:
-            case RGB_SAD:
-            case RGB_VAI:
-            case RGB_VAD:
-                old_color.h = rgblight_get_hue();
-                old_color.s = rgblight_get_sat();
-                old_color.v = rgblight_get_val();
-                break;
-        }
+void matrix_scan_user(void) {
+    if (get_highest_layer(layer_state) == _L7) {
+        old_color.h = rgblight_get_hue();
+        old_color.s = rgblight_get_sat();
+        old_color.v = rgblight_get_val();
     }
-    return true;
 }
 
 /**
