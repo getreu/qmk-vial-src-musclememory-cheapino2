@@ -4,6 +4,8 @@ This firmware implements the [Muscle-memory-friendly home row mods layout](https
 
 ## Compiling and Flashing
 
+### Using the Vial/QMK repository
+
 1.  **Clone and Setup:**
     ```bash
     git clone https://github.com/vial-kb/vial-qmk
@@ -11,6 +13,11 @@ This firmware implements the [Muscle-memory-friendly home row mods layout](https
     git submodule update --init --recursive
     ```
 
+2.  **Copy Keyboard Folder:**
+    ```bash
+    cp -r ../../keyboards/vial vial-qmk/keyboards/
+    ```
+    
 3.  **Compile:**
     ```bash
     make cheapino:vial
@@ -26,17 +33,17 @@ This firmware implements the [Muscle-memory-friendly home row mods layout](https
 
 ## Clearing EEPROM
 
-Clearing the EEPROM resets all persistent settings (RGB configurations, Vial keymaps, tap dances, and combos) to the firmware defaults.
+Clearing the EEPROM resets all persistent settings (RGB configurations, Vial support
+(if compiled in, i.e. keymaps, tap dances, and combos) to the firmware defaults.
 
 In this firmware, `QK_CLEAR_EEPROM` is hard-mapped to the **W key on Layer 7** (left ring, top row) to allow a reset without the GUI.
 
 1.  **Accessing Layer 7:**
-    *   **Combo:** Hold both inner thumb keys simultaneously — **M+Enter** (right half) or **V+Space** (left half).
-    *   **Via FN layer:** Tap the **FN** key (outer left thumb), then hold **/** (bottom-right key, right half).
-2.  **Triggering the Reset:**
-    *   While on Layer 7, press the **Z key**.
+    *   ** Tap the **FN** key (outer left thumb), then hold **/** (bottom-right key, right half).
+2.  **Triggering the Clear EEPROM:**
+    *   While on Layer 7, press the **W key**.
 3.  **Verification:**
-    The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
+    The device will not reboot automatically — press the controller reboot button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the Clear EEPROM was successful.
 
 
 

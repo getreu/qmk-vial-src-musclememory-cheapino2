@@ -14,5 +14,6 @@
 #define VIAL_TAP_DANCE_ENTRIES 10
 #define VIAL_COMBO_ENTRIES 12
 
-// Support 8 layers (BASE through L7)
+// Twelve layers.  Do NOT reduce this: the published .vil contains 12 layers
+// and Vial refuses to import a .vil with more layers than the firmware has.
 #define DYNAMIC_KEYMAP_LAYER_COUNT 12

@@ -29,8 +29,7 @@
     "tapping": {
         "permissive_hold": true,
         "quick_tap_term": 150,
-        "force_hold": false,
-        "hold_on_other_key_press": true,
+        "hold_on_other_key_press": false,
         "term_per_key": true
     },
 

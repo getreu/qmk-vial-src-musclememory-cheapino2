@@ -15,7 +15,7 @@ This firmware implements the [Muscle memory friendly home row mods layout](https
 
 2.  **Copy Keyboard Folder:**
     ```bash
-    cp -r /path/to/this/keyboards/cheapino qmk-qmk/keyboards/
+    cp -r ../../keyboards/cheapino qmk-qmk/keyboards/
     ```
 
 3.  **Compile:**
@@ -43,7 +43,7 @@ Alternatively, you can use the Vial/QMK repository to compile and flash.
 
 2.  **Copy Keyboard Folder:**
     ```bash
-    cp -r /path/to/this/keyboards/cheapino vial-qmk/keyboards/
+    cp -r ../../keyboards/cheapino vial-qmk/keyboards/
     ```
 
 3.  **Compile:**
@@ -51,21 +51,20 @@ Alternatively, you can use the Vial/QMK repository to compile and flash.
     make cheapino:musclememory
     ```
 
-### Using the QMK/QMK repository
 
 ## Clearing EEPROM
 
-Clearing the EEPROM resets all persistent settings (RGB configurations, Vial keymaps, tap dances, and combos) to the firmware defaults.
+Clearing the EEPROM resets all persistent settings (RGB configurations, Vial support
+(if compiled in, i.e. keymaps, tap dances, and combos) to the firmware defaults.
 
 In this firmware, `QK_CLEAR_EEPROM` is hard-mapped to the **W key on Layer 7** (left ring, top row) to allow a reset without the GUI.
 
 1.  **Accessing Layer 7:**
-    *   **Combo:** Hold both inner thumb keys simultaneously — **M+Enter** (right half) or **V+Space** (left half).
-    *   **Via FN layer:** Tap the **FN** key (outer left thumb), then hold **/** (bottom-right key, right half).
-2.  **Triggering the Reset:**
-    *   While on Layer 7, press the **Z key**.
+    *   Tap the **FN** key (outer left thumb), then hold **/** (bottom-right key, right half).
+2.  **Triggering the Clear EEPROM:**
+    *   While on Layer 7, press the **W key**.
 3.  **Verification:**
-    The device will not reboot automatically — press the controller button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the reset was successful.
+    The device will not reboot automatically — press the controller reboot button or disconnect power to apply the reset. The RGB underglow returning to **bright red** confirms the Clear EEPROM was successful.
 
 
 ## RGB Lighting & Layer Feedback
@@ -83,7 +82,7 @@ The underglow changes color based on the active layer:
 | L6 | Mint | Mouse control |
 | L7 | Pink | RGB & Media control |
 
-If whished for, the led can be switched off for all layers(`RGB_TOG`, layer 7),
+If wished for, the led can be switched off for all layers(`RGB_TOG`, layer 7),
 or for the base layer only (`RGB_VAD`, layer 7).
 
 

@@ -32,8 +32,16 @@ enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
  * Initialize RGB color capture
  */
 void keyboard_post_init_user(void) {
-    rgblight_enable_noeeprom();
+    // Force static light, so that an animation mode stored in EEPROM cannot
+    // fight the per-layer colours in layer_state_set_user().
     rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+
+    // Seed the base layer colour from the persisted RGB settings.  Without
+    // this, old_color stays {0,0,0} and the base layer goes dark the first
+    // time we return to it.
+    old_color.h = rgblight_get_hue();
+    old_color.s = rgblight_get_sat();
+    old_color.v = rgblight_get_val();
 }
 
 /**
@@ -68,30 +76,6 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return state;
 }
 
-/**
- * Capture color changes when on base layer
- */
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Update saved color when RGB is adjusted
-    if (record->event.pressed) {
-        switch (keycode) {
-            case RGB_TOG:
-            case RGB_MOD:
-            case RGB_RMOD:
-            case RGB_HUI:
-            case RGB_HUD:
-            case RGB_SAI:
-            case RGB_SAD:
-            case RGB_VAI:
-            case RGB_VAD:
-                old_color.h = rgblight_get_hue();
-                old_color.s = rgblight_get_sat();
-                old_color.v = rgblight_get_val();
-                break;
-        }
-    }
-    return true;
-}
 
 /**
  *
@@ -214,14 +198,25 @@ void td_kp_plus_reset(tap_dance_state_t *state, void *user_data) {
     }
 }
 
+// True while td_cmenu_finished() has switched _L2 on as a momentary layer.
+// Tracking this explicitly is necessary because get_highest_layer() reports
+// a higher layer when one is active at release time: hold [Compose] for
+// momentary numpad, then reach [D]/[K] (reachable -- _L2's left half is
+// transparent) to raise _L3, release [Compose] first -- the highest layer
+// is now _L3, so a get_highest_layer()==_L2 check never fires and the
+// numpad stays on forever.
+static bool td_cmenu_momentary_l2 = false;
+
 void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
     if (!state->pressed && state->count >= 2) {
         // Double tap always activates L2 exclusively, from any layer
+        td_cmenu_momentary_l2 = false;
         layer_move(_L2);
     } else if (get_highest_layer(layer_state) == _BASE) {
         if (state->pressed) {
             // Hold = Momentarily activate L2
             layer_on(_L2);
+            td_cmenu_momentary_l2 = true;
         } else {
             tap_code16(KC_APP);
         }
@@ -232,10 +227,9 @@ void td_cmenu_finished(tap_dance_state_t *state, void *user_data) {
 }
 
 void td_cmenu_reset(tap_dance_state_t *state, void *user_data) {
-    // Only deactivate if count=1 AND we're on L2
-    // (count=1 & on L2 means it was a hold, not a toggle)
-    if (state->count == 1 && get_highest_layer(layer_state) == _L2) {
+    if (td_cmenu_momentary_l2) {
         layer_off(_L2);
+        td_cmenu_momentary_l2 = false;
     }
 }
 
@@ -263,9 +257,30 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         case LT(_L5, KC_BSPC):
             return 250;
 
-        // Fallback to the default value defined in keyboard.json or config.h
+        // Everything else: any tap-hold key whose matrix position carries a
+        // hand ('L'/'R') in chordal_hold_layout gets HOME_ROW_MOD_TERM,
+        // regardless of which layer redefines it there (e.g. _L3's [F]
+        // position is LCTL_T(KC_TAB), _L2's is LALT_T(KC_NUM_LOCK) -- both
+        // still that same matrix position).  Checking position instead of
+        // keycode means this can't silently miss a layer's own variant.
+        // Thumb/center positions ('*') fall through to TAPPING_TERM.
+        //
+        // Tap dances are excluded even though e.g. the numpad's TD_KP_PLUS/
+        // MINUS/DOT/0 sit on 'R' positions: process_tap_dance.c also calls
+        // get_tapping_term() to time its own inter-tap window, which has
+        // nothing to do with chordal hold's opposite-hands decision. Without
+        // this check those four keys would (and did) inherit
+        // HOME_ROW_MOD_TERM and turn noticeably sluggish.
         default:
-            return 200;
+#ifdef HOME_ROW_MOD_OPPOSITE_HAND_ONLY
+            if (!IS_QK_TAP_DANCE(keycode) &&
+                chordal_hold_handedness(record->event.key) != '*') {
+                return HOME_ROW_MOD_TERM;
+            }
+#endif
+            // Fall back to TAPPING_TERM from config.h.  (This used to be a
+            // hardcoded 200 under a comment claiming it was a fallback.)
+            return TAPPING_TERM;
     }
 }
 
@@ -278,12 +293,33 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
  *
  */
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // Return to the base layer when the layer-tap thumb key was tapped.
     if (!record->event.pressed && record->tap.count > 0) {
         switch (keycode) {
             case LT(_L6, KC_NO):
                 layer_clear(); // Reset to Base Layer
                 break;
         }
+    }
+}
+
+/**
+ * Keep old_color mirroring the live colour while on _L7, so that leaving the
+ * layer restores exactly what it was showing.
+ *
+ * This can't be done in post_process_record_user() for RGB_HUI/HUD/SAI/SAD/
+ * VAI/VAD: process_underglow() returns false after applying each of those
+ * (the normal QMK pattern for a keycode that needs no further
+ * register/unregister handling), and QMK's process_record() does an early
+ * return on a false result -- skipping post_process_record_quantum(), and
+ * therefore post_process_record_user(), entirely for that keypress. Polling
+ * here is the one hook that still sees the change before the layer is left.
+ */
+void matrix_scan_user(void) {
+    if (get_highest_layer(layer_state) == _L7) {
+        old_color.h = rgblight_get_hue();
+        old_color.s = rgblight_get_sat();
+        old_color.v = rgblight_get_val();
     }
 }
 
@@ -300,6 +336,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     OSL(_L4), LT(_L6, KC_ESC), MT(MOD_LGUI, KC_SPC), MT(MOD_LGUI, KC_ENT), LT(_L5, KC_BSPC), TD(TD_CMENU)
 ),
 
+// _L1 is intentionally unused and kept only to preserve layer numbering:
+// renumbering would invalidate the published .vil and every Vial screenshot.
 [_L1] = LAYOUT_split_3x5_3(
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
@@ -351,23 +389,46 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 /**
+ * ENCODER
+ * fix_encoder_action() in cheapino.c injects the rotation events; without a
+ * consumer they were discarded.  Index 0 is the only encoder.  Volume
+ * everywhere, brightness on the system layer.  KC_TRNS on every other layer
+ * falls through to the base layer's volume binding.
+ */
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [_BASE] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU) },
+    [_L1]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L2]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L3]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L4]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L5]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L6]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L7]   = { ENCODER_CCW_CW(KC_BRID, KC_BRIU) },
+};
+#endif
+
+/**
  * COMBOS
  * Combos allow triggering actions by pressing multiple keys simultaneously.
  * - combo1/2: Trigger Layer 7 (System settings).
  * - combo3: Go to Layer 3.
  * - combo4/5: Reboot into Bootloader (Flash mode).
  * - combo_caps: Toggle Caps Lock.
+ * - combo_numpad: Go to Layer 2 (numpad).
  */
 const uint16_t PROGMEM combo1[] = { RGUI_T(KC_M), MT(MOD_LGUI, KC_ENT), COMBO_END };
 const uint16_t PROGMEM combo2[] = { RGUI_T(KC_V), MT(MOD_LGUI, KC_SPC), COMBO_END };
 const uint16_t PROGMEM combo3[] = { LT(_L6, KC_ESC), LT(_L5, KC_BSPC), COMBO_END };
 const uint16_t PROGMEM combo4[] = { LT(_L6, KC_NO), LT(_L5, KC_BSPC), COMBO_END };
 const uint16_t PROGMEM combo_caps[] = { OSL(_L4), TD(TD_CMENU), COMBO_END };
+const uint16_t PROGMEM combo_numpad[] = { KC_COMM, KC_DOT, COMBO_END };
 
 combo_t key_combos[] = {
     COMBO(combo1, MO(_L7)),
     COMBO(combo2, MO(_L7)),
     COMBO(combo3, TO(_L3)),
     COMBO(combo4, TO(_L3)),
-    COMBO(combo_caps, KC_CAPS)
+    COMBO(combo_caps, KC_CAPS),
+    COMBO(combo_numpad, TO(_L2))
 };

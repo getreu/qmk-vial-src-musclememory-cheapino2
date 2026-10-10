@@ -1,20 +1,24 @@
 # cheapino
 
-![cheapino](imgur.com image replace me!)
+A column-staggered 3x5+3 split keyboard (RP2040), running the [muscle memory
+friendly home row mods](https://blog.getreu.net/20250826-muscle-memory-friendly-home-row-mods/)
+layout. See the repository root [README.md](../../../README.md) for the
+project this keymap belongs to.
 
-*A short description of the keyboard/project*
+* Keyboard Maintainer: [Thomas Haukland](https://github.com/tompi) (hardware)
+* Hardware Supported: Cheapino v2, RP2040
+* Keymaps: `musclememory` (compiled-in layout) and `vial` (Vial-reconfigurable)
+  -- there is no `default` keymap in this fork, it was removed upstream.
 
-* Keyboard Maintainer: [Thomas Haukland](https://github.com/tompi)
-* Hardware Supported: *The PCBs, controllers supported*
-* Hardware Availability: *Links to where you can find this hardware*
+Build example:
 
-Make example for this keyboard (after setting up your build environment):
+    make cheapino:musclememory
+    make cheapino:vial
 
-    make cheapino:default
-
-Flashing example for this keyboard:
-
-    make cheapino:default:flash
+Flashing: hold the reset button while plugging in USB, then drag the
+resulting `.uf2` onto the `RPI-RP2` drive that appears. See each keymap's own
+readme (`keymaps/musclememory/readme.md`, `keymaps/vial/readme.md`) for the
+full build/flash/EEPROM-reset procedure.
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 

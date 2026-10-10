@@ -53,8 +53,16 @@ enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
  * Initialize RGB color capture
  */
 void keyboard_post_init_user(void) {
-    rgblight_enable_noeeprom();
+    // Force static light, so that an animation mode stored in EEPROM cannot
+    // fight the per-layer colours in layer_state_set_user().
     rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+
+    // Seed the base layer colour from the persisted RGB settings.  Without
+    // this, old_color stays {0,0,0} and the base layer goes dark the first
+    // time we return to it.
+    old_color.h = rgblight_get_hue();
+    old_color.s = rgblight_get_sat();
+    old_color.v = rgblight_get_val();
 }
 
 /**
@@ -90,40 +98,34 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 }
 
 /**
- * Capture color changes when on base layer
+ * Keep old_color mirroring the live colour while on _L7, so that leaving the
+ * layer restores exactly what it was showing.
+ *
+ * This can't be done in post_process_record_user() for RGB_HUI/HUD/SAI/SAD/
+ * VAI/VAD: process_underglow() returns false after applying each of those
+ * (the normal QMK pattern for a keycode that needs no further
+ * register/unregister handling), and QMK's process_record() does an early
+ * return on a false result -- skipping post_process_record_quantum(), and
+ * therefore post_process_record_user(), entirely for that keypress. Polling
+ * here is the one hook that still sees the change before the layer is left.
  */
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Update saved color when RGB is adjusted
-    if (record->event.pressed) {
-        switch (keycode) {
-            case RGB_TOG:
-            case RGB_MOD:
-            case RGB_RMOD:
-            case RGB_HUI:
-            case RGB_HUD:
-            case RGB_SAI:
-            case RGB_SAD:
-            case RGB_VAI:
-            case RGB_VAD:
-                old_color.h = rgblight_get_hue();
-                old_color.s = rgblight_get_sat();
-                old_color.v = rgblight_get_val();
-                break;
-        }
+void matrix_scan_user(void) {
+    if (get_highest_layer(layer_state) == _L7) {
+        old_color.h = rgblight_get_hue();
+        old_color.s = rgblight_get_sat();
+        old_color.v = rgblight_get_val();
     }
-    return true;
 }
 
 /**
- * EEPROM INITIALIZATION - Set Default Combos and Tap Dances
- * This runs when EEPROM is reset (first flash or reset command)
+ * EEPROM INITIALIZATION - Set Default Combos, Tap Dances and Encoder Map
+ * This runs when EEPROM is reset (first flash or reset command).
  *
- * Pattern: Set up defaults just like in musclememory, but using Vial's dynamic system.
- * Combos and tap dances will be stored in EEPROM and can be reconfigured via Vial GUI.
- */
-/**
- * EEPROM INITIALIZATION - Full Vial & RGB Integration
- * This runs when EEPROM is reset to load your screenshot defaults.
+ * Pattern: set up defaults just like in musclememory, but using Vial's
+ * dynamic system -- combos, tap dances and the encoder map are stored in
+ * EEPROM and can be reconfigured via the Vial GUI.  RGB is deliberately not
+ * seeded here: keyboard_post_init_user() already reads whatever is
+ * persisted, and duplicating that here would fight it.
  */
 #if defined(VIAL_COMBO_ENABLE) || defined(VIAL_TAP_DANCE_ENABLE)
 void eeconfig_init_user(void) {
@@ -132,44 +134,44 @@ void eeconfig_init_user(void) {
     // 2. Load Dynamic Combos (These write to EEPROM)
     vial_combo_entry_t combo = {0};
 
-    // Combo 0: Space + Enter -> Layer 7
-    combo.input[0] = LGUI_T(KC_SPC);
-    combo.input[1] = LGUI_T(KC_ENT);
-    combo.output = MO(_L7);
-    dynamic_keymap_set_combo(0, &combo);
-
-    // Combo 1: V + Space -> Layer 7
+    // Combo 0: V + Space -> Layer 7
     combo.input[0] = RGUI_T(KC_V);
     combo.input[1] = LGUI_T(KC_SPC);
     combo.output = MO(_L7);
-    dynamic_keymap_set_combo(1, &combo);
+    dynamic_keymap_set_combo(0, &combo);
 
-    // Combo 2: M + Enter -> Layer 7
+    // Combo 1: M + Enter -> Layer 7
     combo.input[0] = RGUI_T(KC_M);
     combo.input[1] = LGUI_T(KC_ENT);
     combo.output = MO(_L7);
-    dynamic_keymap_set_combo(2, &combo);
+    dynamic_keymap_set_combo(1, &combo);
 
-    // Combo 3: ESC + Backspace -> Go to Layer 3
+    // Combo 2: ESC + Backspace -> Go to Layer 3
     combo.input[0] = LT(_L6, KC_ESC);
     combo.input[1] = LT(_L5, KC_BSPC);
     combo.output = TO(_L3);
-    dynamic_keymap_set_combo(3, &combo);
+    dynamic_keymap_set_combo(2, &combo);
 
-    // Combo 6: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
+    // Combo 5: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
     combo.input[0] = TD(2);
     combo.input[1] = LT(_L5, KC_BSPC);
     combo.output = TO(_L3);
-    dynamic_keymap_set_combo(6, &combo);
+    dynamic_keymap_set_combo(5, &combo);
 
-    // Combo 4 & 5: Outer thumbs -> Caps Lock
+    // Combo 3 & 4: Outer thumbs -> Caps Lock
     combo.input[0] = OSL(_L4); combo.input[1] = TD(0);
     combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(4, &combo);
+    dynamic_keymap_set_combo(3, &combo);
 
     combo.input[0] = OSL(_L4); combo.input[1] = TD(1);
     combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(5, &combo);
+    dynamic_keymap_set_combo(4, &combo);
+
+    // Combo 6: Comma + Dot -> Go to Layer 2 (numpad)
+    combo.input[0] = KC_COMM;
+    combo.input[1] = KC_DOT;
+    combo.output = TO(_L2);
+    dynamic_keymap_set_combo(6, &combo);
 
 #endif
 
@@ -182,6 +184,7 @@ void eeconfig_init_user(void) {
     td.on_tap = KC_APP;
     td.on_hold = MO(_L2);           // momentary L2
     td.on_double_tap = TO(_L2);
+    td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(0, &td);
 
@@ -189,11 +192,12 @@ void eeconfig_init_user(void) {
     td.on_tap = TO(0);
     td.on_hold = MO(_L2);           // momentary L2
     td.on_double_tap = TO(_L2);
+    td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(1, &td);
 
     // TD 2: TO(0) / MO(_L6)
-    td.on_tap = TO(0); td.on_hold = MO(_L6); td.on_double_tap = KC_NO;
+    td.on_tap = TO(0); td.on_hold = MO(_L6); td.on_double_tap = KC_NO; td.on_tap_hold = KC_NO;
     td.custom_tapping_term = 350;
     dynamic_keymap_set_tap_dance(2, &td);
 
@@ -216,6 +220,20 @@ void eeconfig_init_user(void) {
     td.on_tap = KC_KP_0; td.on_hold = KC_PEQL; td.on_double_tap = KC_NO; td.on_tap_hold = KC_KP_0;
     td.custom_tapping_term = 200;
     dynamic_keymap_set_tap_dance(6, &td);
+#endif
+
+#ifdef ENCODER_MAP_ENABLE
+    // 5. Load Dynamic Encoder Map.  This is the part that actually runs on
+    // this keymap -- see the comment on the static encoder_map[] above.
+    // Volume everywhere, brightness on _L7, matching musclememory.
+    for (uint8_t layer = 0; layer < DYNAMIC_KEYMAP_LAYER_COUNT; layer++) {
+        dynamic_keymap_set_encoder(layer, 0, false, KC_TRNS);
+        dynamic_keymap_set_encoder(layer, 0, true, KC_TRNS);
+    }
+    dynamic_keymap_set_encoder(_BASE, 0, false, KC_VOLD);
+    dynamic_keymap_set_encoder(_BASE, 0, true, KC_VOLU);
+    dynamic_keymap_set_encoder(_L7, 0, false, KC_BRID);
+    dynamic_keymap_set_encoder(_L7, 0, true, KC_BRIU);
 #endif
 
     // Finalize the sync
@@ -288,3 +306,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TRNS, TD(2), KC_TRNS,                                    KC_TRNS, KC_TRNS, TD(1)
 )
 };
+
+/**
+ * ENCODER
+ * Static factory-default map, same as musclememory. On this keymap it is
+ * NOT what actually runs: with VIAL_ENABLE, quantum/dynamic_keymap.c
+ * installs a strong keycode_at_encodermap_location() that reads
+ * exclusively from EEPROM, bypassing this array at runtime entirely. It is
+ * still required to exist (keymap_introspection.c's raw accessor indexes
+ * it unconditionally whenever ENCODER_MAP_ENABLE is on) and is what a
+ * fresh Vial GUI "factory defaults" view would show. The values that
+ * actually take effect are seeded into EEPROM below, in
+ * eeconfig_init_user().
+ */
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [_BASE] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU) },
+    [_L1]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L2]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L3]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L4]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L5]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L6]   = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
+    [_L7]   = { ENCODER_CCW_CW(KC_BRID, KC_BRIU) },
+};
+#endif
