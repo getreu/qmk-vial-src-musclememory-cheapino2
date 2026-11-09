@@ -27,7 +27,7 @@
 // Giving those thumbs a physical hand would make half of the mouse and
 // navigation layers unreachable.
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
-    LAYOUT_split_3x5_3(
+    LAYOUT(
         'L', 'L', 'L', 'L', 'L',   '*',   'R', 'R', 'R', 'R', 'R',
         'L', 'L', 'L', 'L', 'L',          'R', 'R', 'R', 'R', 'R',
         'L', 'L', 'L', 'L', 'L',          'R', 'R', 'R', 'R', 'R',

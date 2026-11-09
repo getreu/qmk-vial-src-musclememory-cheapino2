@@ -1,221 +1,113 @@
-#include "matrix.h"
-#include "quantum.h"
-#include "print.h"
+// Copyright 2023 Thomas Haukland (@tompi)
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 #include QMK_KEYBOARD_H
+#include "cheapino.h"
 
-// This is to keep state between callbacks, when it is 0 the
-// initial RGB flash is finished
-static uint8_t _hue_countdown = 50;
+// Startup LED animation: cycle through some colours for 2.5 seconds, then
+// go back to the user's colour. Runs on the deferred executor so the
+// keyboard is usable meanwhile, and doesn't write to EEPROM.
 
-// These are to keep track of user selected color, so we
-// can restore it after RGB flash
-static uint8_t _hue;
-static uint8_t _saturation;
-static uint8_t _value;
+static uint8_t flash_steps_left = 50;
 
-// Do a little 2.5 seconds display of the different colors
-// Use the deferred executor so the LED flash dance does not
-// stop us from using the keyboard.
-// https://docs.qmk.fm/#/custom_quantum_functions?id=deferred-executor-registration
-uint32_t flash_led(uint32_t next_trigger_time, void *cb_arg) {
-    // _noeeprom: the persisting variant was writing the emulated EEPROM
-    // 50 times on every single boot.
-    rgblight_sethsv_noeeprom(_hue_countdown * 5, 230, 70);
-    _hue_countdown--;
-    if (_hue_countdown == 0) {
-        // Finished, reset to user chosen led color
-        rgblight_sethsv_noeeprom(_hue, _saturation, _value);
+static uint32_t flash_led(uint32_t trigger_time, void *cb_arg) {
+    if (--flash_steps_left == 0) {
+        rgblight_reload_from_eeprom();
         return 0;
-    } else {
-        return 50;
     }
+    rgblight_sethsv_noeeprom(flash_steps_left * 5, 230, 70);
+    return 50;
 }
 
 void keyboard_post_init_kb(void) {
-    // debug_enable=true;
-    // debug_matrix=true;
-    // debug_keyboard=true;
-    // debug_mouse=true;
-
-    // Store user selected rgb hsv:
-    _hue        = rgblight_get_hue();
-    _saturation = rgblight_get_sat();
-    _value      = rgblight_get_val();
-
-    // Flash a little on start
     defer_exec(50, flash_led, NULL);
-
-    // Mandatory.  Overriding keyboard_post_init_kb() without this breaks
-    // QMK's weak function chain, which is why the keymaps'
-    // keyboard_post_init_user() has never run.
     keyboard_post_init_user();
 }
 
-// This is just to be able to declare constants as they appear in the qmk console
-#define rev(b) \
-            ((b & 1) << 15) | \
-            ((b & (1 << 1)) << 13) | \
-            ((b & (1 << 2)) << 11) | \
-            ((b & (1 << 3)) << 9) | \
-            ((b & (1 << 4)) << 7) | \
-            ((b & (1 << 5)) << 5) | \
-            ((b & (1 << 6)) << 3) | \
-            ((b & (1 << 7)) << 1) | \
-            ((b & (1 << 8)) >> 1) | \
-            ((b & (1 << 9)) >> 3) | \
-            ((b & (1 << 10)) >> 5) | \
-            ((b & (1 << 11)) >> 7) | \
-            ((b & (1 << 12)) >> 9) | \
-            ((b & (1 << 13)) >> 11) | \
-            ((b & (1 << 14)) >> 13) | \
-            b >> 15
+// Ghosting
+//
+// The Cheapino uses a "duplex" matrix: every column pin carries two logical
+// columns that are scanned in opposite directions (even columns: drive the
+// column, read the rows; odd columns: drive the row, read the columns), each
+// with its own diode direction. That saves pins, but lets current sneak
+// through two held keys in one row when they sit on different column pins
+// and scan in opposite directions. A third key in another row, on the same
+// pin as one of them, then makes a key that isn't pressed show up.
+//
+// Example (v2, QWERTY, left half): hold Q and W, press D, and A shows up too.
+// See https://github.com/tompi/cheapino/issues/33
+//
+// QMK's MATRIX_HAS_GHOST can't catch this. It only looks for the classic
+// rectangle (two rows sharing two logical columns), which never happens here
+// because the sneak path uses both logical columns of one pin. It also
+// ignores the whole row while a ghost is possible, which would drop real
+// chords such as home row mods.
+//
+// Rule: with keys (i, a), (i, b) and (j, a ^ 1) held, where a and b are on
+// different pins (a / 2 != b / 2) and scan in opposite directions
+// (a % 2 != b % 2), a ghost appears at (j, b). Remove it.
+//
+// The revisions call this for each group of rows that share column pins.
 
-/* This is for debugging the matrix rows
-void printBits(uint16_t n)
-{
-    long i;
-    for (i = 15; i >= 0; i--) {
-        if ((n & (1 << i)) != 0) {
-            printf("1");
+#define CHEAPINO_MAX_GHOST_ROWS 3
+
+void cheapino_remove_ghosts(matrix_row_t matrix[], uint8_t first_row, uint8_t num_rows, uint8_t first_col, uint8_t num_cols) {
+    matrix_row_t rows[CHEAPINO_MAX_GHOST_ROWS];
+    matrix_row_t ghosts[CHEAPINO_MAX_GHOST_ROWS] = {0};
+
+    if (num_rows > CHEAPINO_MAX_GHOST_ROWS) num_rows = CHEAPINO_MAX_GHOST_ROWS;
+
+    for (uint8_t r = 0; r < num_rows; r++) {
+        rows[r] = (matrix[first_row + r] >> first_col) & (((matrix_row_t)1 << num_cols) - 1);
+    }
+
+    for (uint8_t i = 0; i < num_rows; i++) {
+        for (uint8_t j = 0; j < num_rows; j++) {
+            if (i == j) continue;
+            for (uint8_t a = 0; a < num_cols; a++) {
+                if (!(rows[i] & ((matrix_row_t)1 << a)) || !(rows[j] & ((matrix_row_t)1 << (a ^ 1)))) continue;
+                for (uint8_t b = 0; b < num_cols; b++) {
+                    bool other_pin       = (b >> 1) != (a >> 1);
+                    bool other_direction = (b & 1) != (a & 1);
+                    if (other_pin && other_direction && (rows[i] & ((matrix_row_t)1 << b))) {
+                        ghosts[j] |= (matrix_row_t)1 << b;
+                    }
+                }
+            }
         }
-        else {
-            printf("0");
-        }
     }
-    printf("\n");
-}
-*/
 
-bool bit_pattern_set(uint16_t number, uint16_t bitPattern) {
-    return !(~number & bitPattern);
-}
-
-void fix_ghosting_instance(
-        matrix_row_t current_matrix[],
-        unsigned short row_num_with_possible_error_cause,
-        uint16_t possible_error_cause,
-        unsigned short row_num_with_possible_error,
-        uint16_t possible_error,
-        uint16_t error_fix) {
-    if (bit_pattern_set(current_matrix[row_num_with_possible_error_cause], possible_error_cause)) {
-        if (bit_pattern_set(current_matrix[row_num_with_possible_error], possible_error)) {
-            current_matrix[row_num_with_possible_error] = current_matrix[row_num_with_possible_error] ^ error_fix;
-        }
+    for (uint8_t r = 0; r < num_rows; r++) {
+        matrix[first_row + r] &= ~(ghosts[r] << first_col);
     }
 }
 
-void fix_ghosting_column(
-        matrix_row_t matrix[],
-        uint16_t possible_error_cause,
-        uint16_t possible_error,
-        uint16_t error_fix) {
-    // First the right side
-    for (short i = 0; i<3; i++) {
-        fix_ghosting_instance(matrix, i, possible_error_cause, (i+1)%3, possible_error, error_fix);
-        fix_ghosting_instance(matrix, i, possible_error_cause, (i+2)%3, possible_error, error_fix);
-    }
+// Encoder
+//
+// There aren't enough pins on the RJ45 for dedicated encoder pins, so the
+// encoder's A and B contacts sit in the matrix. Each revision picks them out
+// during the matrix scan, clears them so they never reach the keymap (where
+// they could, for example, resolve a tap-hold key early), and hands them over
+// here. The encoder press is a normal key at [3, 0].
 
-    // Then exactly same procedure on the left side
-    for (short i = 0; i<3; i++) {
-        fix_ghosting_instance(matrix, i+4, possible_error_cause<<6, 4+((i+1)%3), possible_error<<6, error_fix<<6);
-        fix_ghosting_instance(matrix, i+4, possible_error_cause<<6, 4+((i+2)%3), possible_error<<6, error_fix<<6);
-    }
+static bool enc_a = false;
+static bool enc_b = false;
+
+void cheapino_set_encoder_contacts(bool a_closed, bool b_closed) {
+    enc_a = a_closed;
+    enc_b = b_closed;
 }
 
-// For QWERTY layout, key combo a+s+e also outputs q. This suppresses the q, and other similar ghosts
-// These are observed ghosts(following a pattern). TODO: need to fix this for v3
-// Might need to add 2 diodes(one in each direction) for every row, to increase voltage drop.
-void fix_ghosting(matrix_row_t matrix[]) {
-    fix_ghosting_column(matrix,
-                        rev(0B0110000000000000),
-                        rev(0B1010000000000000),
-                        rev(0B0010000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0110000000000000),
-                        rev(0B0101000000000000),
-                        rev(0B0100000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B0001100000000000),
-                        rev(0B0010100000000000),
-                        rev(0B0000100000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0001100000000000),
-                        rev(0B0001010000000000),
-                        rev(0B0001000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B1000010000000000),
-                        rev(0B1000100000000000),
-                        rev(0B1000000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B1000010000000000),
-                        rev(0B0100010000000000),
-                        rev(0B0000010000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B1001000000000000),
-                        rev(0B0101000000000000),
-                        rev(0B0001000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B1001000000000000),
-                        rev(0B1010000000000000),
-                        rev(0B1000000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B0100100000000000),
-                        rev(0B0100010000000000),
-                        rev(0B0100000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0100100000000000),
-                        rev(0B1000100000000000),
-                        rev(0B0000100000000000));
-}
+void encoder_driver_init(void) {}
 
 void encoder_driver_task(void) {
-    // This is intentionally left empty to disable the default encoder driver.
-    // We inject events manually below.
-}
+    static bool both_closed = false;
 
-// There aren't enough pins on the RJ45 for dedicated encoder pins. Use matrix
-// intersections instead.
-void fix_encoder_action(matrix_row_t current_matrix[]) {
-    static const int ENC_ROW   = 3;
-    static const int ENC_A_COL = 2;
-    static const int ENC_B_COL = 4;
-    // The button column is unused here and handled through the keymap instead.
-    // static const int ENC_BUTTON_COL = 0;
-    static const matrix_row_t ENC_A_BIT = (1 << ENC_A_COL);
-    static const matrix_row_t ENC_B_BIT = (1 << ENC_B_COL);
-
-    // State machine tracking.
-    static bool colABPressed = false;
-
-    // Check which way the encoder is turned:
-    matrix_row_t encoder_row = current_matrix[ENC_ROW];
-    bool         colA        = encoder_row & ENC_A_BIT;
-    bool         colB        = encoder_row & ENC_B_BIT;
-
-    extern bool encoder_queue_event(uint8_t, bool);
-    if (colA && colB) {
-        colABPressed = true;
-    } else if (colA) {
-        if (colABPressed) {
-            // A+B followed by A means clockwise
-            colABPressed = false;
-            encoder_queue_event(0, false);
-        }
-    } else if (colB) {
-        if (colABPressed) {
-            // A+B followed by B means counter-clockwise
-            colABPressed = false;
-            encoder_queue_event(0, true);
-        }
+    if (enc_a && enc_b) {
+        both_closed = true;
+    } else if (both_closed && (enc_a || enc_b)) {
+        // A+B followed by only A means clockwise, only B counter-clockwise
+        both_closed = false;
+        encoder_queue_event(0, enc_a);
     }
-
-    // Clear A+B bits, and leave the button bits intact; it will be picked up
-    // by normal matrix/keymap processing.
-    static const matrix_row_t ROW_MASK = ~(ENC_A_BIT | ENC_B_BIT);
-    current_matrix[ENC_ROW]            = encoder_row & ROW_MASK;
 }

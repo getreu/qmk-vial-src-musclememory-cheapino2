@@ -48,7 +48,7 @@ Alternatively, you can use the Vial/QMK repository to compile and flash.
 
 3.  **Compile:**
     ```bash
-    make cheapino:musclememory
+    make cheapino/v2:musclememory
     ```
 
 

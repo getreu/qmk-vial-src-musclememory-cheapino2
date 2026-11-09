@@ -307,8 +307,8 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
  * Keep old_color mirroring the live colour while on _L7, so that leaving the
  * layer restores exactly what it was showing.
  *
- * This can't be done in post_process_record_user() for RGB_HUI/HUD/SAI/SAD/
- * VAI/VAD: process_underglow() returns false after applying each of those
+ * This can't be done in post_process_record_user() for the underglow hue/
+ * saturation/value keys: process_underglow() returns false after applying each of those
  * (the normal QMK pattern for a keycode that needs no further
  * register/unregister handling), and QMK's process_record() does an early
  * return on a false result -- skipping post_process_record_quantum(), and
@@ -329,7 +329,7 @@ void matrix_scan_user(void) {
  */
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
-[_BASE] = LAYOUT_split_3x5_3(
+[_BASE] = LAYOUT(
     KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_MUTE, KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
     LSFT_T(KC_A), RALT_T(KC_S), LT(_L3, KC_D), LCTL_T(KC_F), LALT_T(KC_G), LALT_T(KC_H), RCTL_T(KC_J), LT(_L3, KC_K), RALT_T(KC_L), RSFT_T(KC_SCLN),
     KC_Z,    KC_X,    KC_C,    RGUI_T(KC_V), KC_B,    KC_N,    RGUI_T(KC_M), KC_COMM, KC_DOT,  KC_SLSH,
@@ -338,51 +338,51 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 // _L1 is intentionally unused and kept only to preserve layer numbering:
 // renumbering would invalidate the published .vil and every Vial screenshot.
-[_L1] = LAYOUT_split_3x5_3(
+[_L1] = LAYOUT(
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
     KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L2] = LAYOUT_split_3x5_3(
+[_L2] = LAYOUT(
     KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS, KC_TRNS, TD(TD_KP_PLUS),      KC_KP_7,         KC_KP_8,          KC_KP_9,         TD(TD_KP_0),
     KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         LALT_T(KC_NUM_LOCK), RCTL_T(KC_KP_4), LT(_L3, KC_KP_5), RALT_T(KC_KP_6), RSFT_T(KC_PENT),
     KC_TRNS,        KC_TRNS,        KC_TRNS,         KC_TRNS,        KC_TRNS,         TD(TD_KP_MINUS),     RGUI_T(KC_KP_1), KC_KP_2,          KC_KP_3,         TD(TD_KP_DOT),
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L3] = LAYOUT_split_3x5_3(
+[_L3] = LAYOUT(
     KC_1,           KC_2,           KC_3,             KC_4,           KC_5,  KC_TRNS,  KC_6,            KC_7,            KC_8,          KC_9,            KC_0,
     LSFT_T(KC_ESC), RALT_T(KC_INS), LT(_L3,KC_DEL),   LCTL_T(KC_TAB), LALT_T(KC_BSPC), LALT_T(KC_LEFT), RCTL_T(KC_DOWN), LT(_L3,KC_UP), RALT_T(KC_RGHT), RSFT_T(KC_ENT),
     KC_GRV,         KC_MINS,        KC_EQL,           RGUI_T(KC_LBRC), KC_RBRC,        KC_BSLS,         RGUI_T(KC_QUOT), KC_COMM,       KC_DOT,          KC_SLSH,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L4] = LAYOUT_split_3x5_3(
+[_L4] = LAYOUT(
     KC_F1,          KC_F2,          KC_F3,   KC_F4,           KC_F5,   QK_REBOOT, KC_F6,          KC_F7,          KC_F8,   KC_F9,          KC_F10,
     LSFT_T(KC_F11), RALT_T(KC_F12), KC_F13,  LCTL_T(KC_F14),  LALT_T(KC_F15),     LALT_T(KC_F16), RCTL_T(KC_F17), KC_F18,  RALT_T(KC_F19), RSFT_T(KC_F20),
     KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          MO(_L7),
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L5] = LAYOUT_split_3x5_3(
+[_L5] = LAYOUT(
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,    KC_NO,  KC_HOME, KC_INS,  KC_DEL,  KC_END,  KC_BSPC,
     KC_ESC,  KC_INS,  KC_DEL,  KC_TAB,  KC_BSPC,          KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            KC_NO,   KC_PGDN, KC_PGUP, KC_NO,   KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L6] = LAYOUT_split_3x5_3(
+[_L6] = LAYOUT(
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,  KC_NO,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,
     MS_BTN5, MS_BTN1, MS_BTN3, MS_BTN2, MS_BTN4,          MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_BTN1,
     KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,            MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 ),
 
-[_L7] = LAYOUT_split_3x5_3(
-    QK_BOOT,   QK_CLEAR_EEPROM, RGB_VAD, RGB_VAI, RGB_TOG, KC_NO,   KC_NO,   KC_BRID, KC_BRIU, KC_NO, KC_NO,
-    QK_REBOOT, RGB_SAD,         RGB_HUD, RGB_HUI, RGB_SAI,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO, KC_NO,
+[_L7] = LAYOUT(
+    QK_BOOT,   QK_CLEAR_EEPROM, QK_UNDERGLOW_VALUE_DOWN, QK_UNDERGLOW_VALUE_UP, QK_UNDERGLOW_TOGGLE, KC_NO,   KC_NO,   KC_BRID, KC_BRIU, KC_NO, KC_NO,
+    QK_REBOOT, QK_UNDERGLOW_SATURATION_DOWN,         QK_UNDERGLOW_HUE_DOWN, QK_UNDERGLOW_HUE_UP, QK_UNDERGLOW_SATURATION_UP,          KC_MUTE, KC_VOLD, KC_VOLU, KC_NO, KC_NO,
     KC_NO,     KC_NO,           KC_NO,   KC_NO,   KC_NO,            KC_MPLY, KC_MPRV, KC_MNXT, KC_NO, KC_NO,
     KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
 )

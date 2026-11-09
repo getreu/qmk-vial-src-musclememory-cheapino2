@@ -20,7 +20,7 @@ This firmware implements the [Muscle-memory-friendly home row mods layout](https
     
 3.  **Compile:**
     ```bash
-    make cheapino:vial
+    make cheapino/v2:vial
     ```
 
 4.  **Flash to Cheapino (RP2040)**:
