@@ -46,6 +46,24 @@ static custom_hsv_t l7_entry_color;
  */
 enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
 
+#if defined(VIAL_COMBO_ENABLE) || defined(VIAL_TAP_DANCE_ENABLE)
+static void vial_seed_dynamic_defaults(void);
+
+// eeconfig_init_via_user() is a patch to this vial-qmk checkout's
+// quantum/via.c (not upstream -- see the comment there), called once
+// right after eeconfig_init_via() wipes the dynamic keymap, from BOTH of
+// its call sites: via_init()'s automatic check at boot (keyed to BUILD_ID,
+// which changes every rebuild) and Vial GUI's "Reset EEPROM" button
+// (id_eeprom_reset), which never reboots and so gives a boot-time-only
+// check nothing to observe. Hooking the wipe itself, rather than inferring
+// it indirectly, is what makes this correct for both triggers without
+// also firing on a plain power cycle where nothing was wiped -- which
+// would stomp any combo/tap-dance customised live in Vial since.
+void eeconfig_init_via_user(void) {
+    vial_seed_dynamic_defaults();
+}
+#endif
+
 /**
  * COLOR DEFINITIONS
  */
@@ -142,23 +160,16 @@ void matrix_scan_user(void) {
 }
 
 /**
- * EEPROM INITIALIZATION - Set Default Combos, Tap Dances and Encoder Map
- * This runs when EEPROM is reset (first flash or reset command).
- *
- * Pattern: set up defaults just like in musclememory, but using Vial's
- * dynamic system -- combos, tap dances and the encoder map are stored in
- * EEPROM and can be reconfigured via the Vial GUI.  RGB IS seeded here
- * (moderate white, instead of QMK's built-in bright red default): this
- * function only runs once, on EEPROM reset, so it can't fight
- * keyboard_post_init_user(), which only ever reads the persisted colour on
- * every later boot.
+ * Set Default Combos, Tap Dances and Encoder Map -- the Vial-dynamic
+ * counterpart of a static musclememory keymap. Called both from
+ * eeconfig_init_user() (classic EEPROM reset: first flash or QK_CLEAR_EEPROM)
+ * and from keyboard_post_init_user() (repairing a wipe that via_init() just
+ * did on its own, independently of classic eeconfig -- see vial_needs_reseed
+ * above), so that either trigger leaves Vial's combos/tap-dances/encoder map
+ * matching this source rather than stale or blank.
  */
 #if defined(VIAL_COMBO_ENABLE) || defined(VIAL_TAP_DANCE_ENABLE)
-void eeconfig_init_user(void) {
-
-    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-    rgblight_sethsv(COLOR_WHITE);
-
+static void vial_seed_dynamic_defaults(void) {
 #ifdef VIAL_COMBO_ENABLE
     // 2. Load Dynamic Combos (These write to EEPROM)
     vial_combo_entry_t combo = {0};
@@ -267,6 +278,20 @@ void eeconfig_init_user(void) {
 
     // Finalize the sync
     vial_init();
+}
+
+/**
+ * EEPROM INITIALIZATION
+ * This runs when EEPROM is reset (first flash or reset command). RGB IS
+ * seeded here (moderate white, instead of QMK's built-in bright red
+ * default): this function only runs once, on EEPROM reset, so it can't
+ * fight keyboard_post_init_user(), which only ever reads the persisted
+ * colour on every later boot.
+ */
+void eeconfig_init_user(void) {
+    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+    rgblight_sethsv(COLOR_WHITE);
+    vial_seed_dynamic_defaults();
 }
 #endif
 
