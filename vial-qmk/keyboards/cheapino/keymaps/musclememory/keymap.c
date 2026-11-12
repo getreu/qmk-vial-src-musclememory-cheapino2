@@ -12,6 +12,14 @@ typedef struct {
 } custom_hsv_t;
 static custom_hsv_t old_color;
 
+// Snapshot of the _L7 indicator colour (pink) taken right after it's
+// applied.  matrix_scan_user() only promotes the live colour into
+// old_color once it has moved away from this snapshot, i.e. once the user
+// has actually touched the underglow hue/sat/val keys -- otherwise leaving
+// _L7 without ever adjusting anything would restore pink instead of the
+// real base colour.
+static custom_hsv_t l7_entry_color;
+
 /**
  * LAYER DEFINITIONS
  */
@@ -26,7 +34,10 @@ enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
 #define COLOR_LAVENDER  210, 130, 15
 #define COLOR_RED       0, 255, 12
 #define COLOR_PINK      230, 170, 10
-#define COLOR_WHITE     0, 0, 10
+// Slight warm bias (not pure hue=0/sat=0) to counteract the cool/blue cast
+// cheap WS2812 LEDs show at very low brightness -- confirmed on real v2
+// hardware 2026-11-12.
+#define COLOR_WHITE     0, 0, 5
 
 /**
  * Initialize RGB color capture
@@ -42,6 +53,16 @@ void keyboard_post_init_user(void) {
     old_color.h = rgblight_get_hue();
     old_color.s = rgblight_get_sat();
     old_color.v = rgblight_get_val();
+}
+
+/**
+ * EEPROM INITIALIZATION
+ * Runs once, only when the EEPROM is reset (first flash or QK_CLEAR_EEPROM).
+ * Seeds a moderate white instead of QMK's built-in bright red default.
+ */
+void eeconfig_init_user(void) {
+    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+    rgblight_sethsv(COLOR_WHITE);
 }
 
 /**
@@ -67,6 +88,12 @@ layer_state_t layer_state_set_user(layer_state_t state) {
             break;
         case _L7:
             rgblight_sethsv_noeeprom(COLOR_PINK);
+            // Remember exactly what was just applied, so matrix_scan_user()
+            // can tell "still showing the indicator" apart from "the user
+            // adjusted it".
+            l7_entry_color.h = rgblight_get_hue();
+            l7_entry_color.s = rgblight_get_sat();
+            l7_entry_color.v = rgblight_get_val();
             break;
         default:
             // Restore original color on base layer
@@ -304,8 +331,10 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 /**
- * Keep old_color mirroring the live colour while on _L7, so that leaving the
- * layer restores exactly what it was showing.
+ * Keep old_color mirroring the live colour while on _L7, but only once the
+ * user has actually changed it -- comparing against l7_entry_color (the
+ * pink indicator snapshot) is what keeps leaving _L7 untouched from
+ * clobbering old_color with pink itself.
  *
  * This can't be done in post_process_record_user() for the underglow hue/
  * saturation/value keys: process_underglow() returns false after applying each of those
@@ -317,9 +346,14 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
  */
 void matrix_scan_user(void) {
     if (get_highest_layer(layer_state) == _L7) {
-        old_color.h = rgblight_get_hue();
-        old_color.s = rgblight_get_sat();
-        old_color.v = rgblight_get_val();
+        uint8_t h = rgblight_get_hue();
+        uint8_t s = rgblight_get_sat();
+        uint8_t v = rgblight_get_val();
+        if (h != l7_entry_color.h || s != l7_entry_color.s || v != l7_entry_color.v) {
+            old_color.h = h;
+            old_color.s = s;
+            old_color.v = v;
+        }
     }
 }
 
