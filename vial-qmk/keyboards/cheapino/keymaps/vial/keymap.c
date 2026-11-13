@@ -205,11 +205,12 @@ static void vial_seed_dynamic_defaults(void) {
     combo.output = TO(_L3);
     dynamic_keymap_set_combo(1, &combo);
 
-    // Combo 6: Comma + Dot -> Go to Layer 2 (numpad)
+    // Combo 2: Comma + Dot -> Go to Layer 2 (numpad); renumbered down from
+    // slot 6 to close the gap left by removing the old combos 2-5
     combo.input[0] = KC_COMM;
     combo.input[1] = KC_DOT;
     combo.output = TO(_L2);
-    dynamic_keymap_set_combo(6, &combo);
+    dynamic_keymap_set_combo(2, &combo);
 
 #endif
 
