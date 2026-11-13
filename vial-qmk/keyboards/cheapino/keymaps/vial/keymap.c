@@ -46,6 +46,21 @@ static custom_hsv_t l7_entry_color;
  */
 enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
 
+/**
+ * _L4's SYSTEM-LAYER GATE (middle thumb keys)
+ *
+ * Both are plain MO(_L7) -- immediate press/release, no tap-hold/tap-dance
+ * ambiguity at all. A Vial dynamic Tap Dance version (TD 7/TD 8) was tried
+ * first and was unreliable specifically because [FN] (OSL(_L4)) is a
+ * genuine one-shot: tapping it and releasing before pressing the gate key
+ * clears the one-shot's bookkeeping synchronously on that press, before a
+ * deferred tap-dance resolution ever gets a chance to run -- confirmed by
+ * instrumented hardware tracing. A plain MO() has no such deferral, so it
+ * sidesteps the race entirely. Trade-off: tapping either key (instead of
+ * holding) does nothing -- but it's now expressible purely via the Vial
+ * GUI's keycode picker ("Momentary Layer 7"), no custom code required.
+ */
+
 #if defined(VIAL_COMBO_ENABLE) || defined(VIAL_TAP_DANCE_ENABLE)
 static void vial_seed_dynamic_defaults(void);
 
@@ -174,38 +189,21 @@ static void vial_seed_dynamic_defaults(void) {
     // 2. Load Dynamic Combos (These write to EEPROM)
     vial_combo_entry_t combo = {0};
 
-    // Combo 0: V + Space -> Layer 7
+    // Combo 0: V + Esc -> Caps Lock (freed up from the old Layer-7 gate now
+    // that _L4's middle thumb keys reach the system layer instead; moved
+    // off Space onto Esc so the chord no longer shares its thumb key with
+    // every space keystroke)
     combo.input[0] = RGUI_T(KC_V);
-    combo.input[1] = LGUI_T(KC_SPC);
-    combo.output = MO(_L7);
+    combo.input[1] = LT(_L6, KC_ESC);
+    combo.output = KC_CAPS_LOCK;
     dynamic_keymap_set_combo(0, &combo);
 
-    // Combo 1: M + Enter -> Layer 7
+    // Combo 1: M + Backspace -> Layer 3 (symbol layer); same reasoning as
+    // Combo 0, moved off Enter onto Backspace
     combo.input[0] = RGUI_T(KC_M);
-    combo.input[1] = LGUI_T(KC_ENT);
-    combo.output = MO(_L7);
+    combo.input[1] = LT(_L5, KC_BSPC);
+    combo.output = TO(_L3);
     dynamic_keymap_set_combo(1, &combo);
-
-    // Combo 2: ESC + Backspace -> Go to Layer 3
-    combo.input[0] = LT(_L6, KC_ESC);
-    combo.input[1] = LT(_L5, KC_BSPC);
-    combo.output = TO(_L3);
-    dynamic_keymap_set_combo(2, &combo);
-
-    // Combo 5: TD(2) + Backspace -> Go to Layer 3 (stay in symbol layer from L3)
-    combo.input[0] = TD(2);
-    combo.input[1] = LT(_L5, KC_BSPC);
-    combo.output = TO(_L3);
-    dynamic_keymap_set_combo(5, &combo);
-
-    // Combo 3 & 4: Outer thumbs -> Caps Lock
-    combo.input[0] = OSL(_L4); combo.input[1] = TD(0);
-    combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(3, &combo);
-
-    combo.input[0] = OSL(_L4); combo.input[1] = TD(1);
-    combo.output = KC_CAPS_LOCK;
-    dynamic_keymap_set_combo(4, &combo);
 
     // Combo 6: Comma + Dot -> Go to Layer 2 (numpad)
     combo.input[0] = KC_COMM;
@@ -335,8 +333,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_L4] = LAYOUT(
     KC_F1,          KC_F2,          KC_F3,   KC_F4,           KC_F5,   QK_REBOOT, KC_F6,          KC_F7,          KC_F8,   KC_F9,          KC_F10,
     LSFT_T(KC_F11), RALT_T(KC_F12), KC_F13,  LCTL_T(KC_F14),  LALT_T(KC_F15),     LALT_T(KC_F16), RCTL_T(KC_F17), KC_F18,  RALT_T(KC_F19), RSFT_T(KC_F20),
-    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          MO(_L7),
-    KC_TRNS, TD(2), KC_TRNS,                              KC_TRNS, KC_TRNS, TD(1)
+    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          KC_NO,
+    KC_TRNS, MO(_L7), KC_TRNS,                              KC_TRNS, MO(_L7), TD(1)
 ),
 
 [_L5] = LAYOUT(

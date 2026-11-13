@@ -26,6 +26,22 @@ static custom_hsv_t l7_entry_color;
 enum layers { _BASE = 0, _L1, _L2, _L3, _L4, _L5, _L6, _L7 };
 
 /**
+ * _L4's SYSTEM-LAYER GATE (middle thumb keys)
+ *
+ * Both are plain MO(_L7) -- immediate press/release, no tap-hold/tap-dance
+ * ambiguity at all. LT()/tap-dance versions of this were tried first and
+ * were unreliable specifically because [FN] (OSL(_L4)) is a genuine
+ * one-shot: tapping it and releasing before pressing the gate key clears
+ * the one-shot's bookkeeping synchronously on that press, before a
+ * deferred tap-hold/tap-dance resolution ever gets a chance to run --
+ * confirmed by instrumented hardware tracing. A plain MO() has no such
+ * deferral (dispatches synchronously on both press and release), so it
+ * sidesteps the race entirely -- the same reason [/] already worked
+ * reliably as a combo-free path before this.  Trade-off: tapping either
+ * key (instead of holding) does nothing, same as [/] always did.
+ */
+
+/**
  * COLOR DEFINITIONS
  */
 #define COLOR_AMBER     20, 180, 10
@@ -396,8 +412,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_L4] = LAYOUT(
     KC_F1,          KC_F2,          KC_F3,   KC_F4,           KC_F5,   QK_REBOOT, KC_F6,          KC_F7,          KC_F8,   KC_F9,          KC_F10,
     LSFT_T(KC_F11), RALT_T(KC_F12), KC_F13,  LCTL_T(KC_F14),  LALT_T(KC_F15),     LALT_T(KC_F16), RCTL_T(KC_F17), KC_F18,  RALT_T(KC_F19), RSFT_T(KC_F20),
-    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          MO(_L7),
-    KC_TRNS, LT(_L6, KC_NO), KC_TRNS,           KC_TRNS, KC_TRNS, KC_TRNS
+    KC_F21,         KC_F22,         KC_F23,  RGUI_T(KC_F24),  KC_NO,              KC_NO,          RGUI_T(KC_NO),  KC_NO,   KC_NO,          KC_NO,
+    KC_TRNS, MO(_L7), KC_TRNS,           KC_TRNS, MO(_L7), KC_TRNS
 ),
 
 [_L5] = LAYOUT(
@@ -445,24 +461,22 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
 /**
  * COMBOS
  * Combos allow triggering actions by pressing multiple keys simultaneously.
- * - combo1/2: Trigger Layer 7 (System settings).
- * - combo3: Go to Layer 3.
- * - combo4/5: Reboot into Bootloader (Flash mode).
- * - combo_caps: Toggle Caps Lock.
+ * - combo1 (M+Backspace): Go to Layer 3 (symbol layer); combo2 (V+Esc):
+ *   Toggle Caps Lock (both freed up from the old Layer-7 gate now that
+ *   _L4's middle thumb keys reach the system layer instead; moved off
+ *   Space/Enter onto Esc/Backspace so the chord no longer shares its
+ *   thumb key with every space/enter keystroke).
  * - combo_numpad: Go to Layer 2 (numpad).
+ *
+ * (The old middle-thumb-keys combo and outer-thumb-keys combo were
+ * removed -- redundant with combo1/2 and with _L4's system-layer gate.)
  */
-const uint16_t PROGMEM combo1[] = { RGUI_T(KC_M), MT(MOD_LGUI, KC_ENT), COMBO_END };
-const uint16_t PROGMEM combo2[] = { RGUI_T(KC_V), MT(MOD_LGUI, KC_SPC), COMBO_END };
-const uint16_t PROGMEM combo3[] = { LT(_L6, KC_ESC), LT(_L5, KC_BSPC), COMBO_END };
-const uint16_t PROGMEM combo4[] = { LT(_L6, KC_NO), LT(_L5, KC_BSPC), COMBO_END };
-const uint16_t PROGMEM combo_caps[] = { OSL(_L4), TD(TD_CMENU), COMBO_END };
+const uint16_t PROGMEM combo1[] = { RGUI_T(KC_M), LT(_L5, KC_BSPC), COMBO_END };
+const uint16_t PROGMEM combo2[] = { RGUI_T(KC_V), LT(_L6, KC_ESC), COMBO_END };
 const uint16_t PROGMEM combo_numpad[] = { KC_COMM, KC_DOT, COMBO_END };
 
 combo_t key_combos[] = {
-    COMBO(combo1, MO(_L7)),
-    COMBO(combo2, MO(_L7)),
-    COMBO(combo3, TO(_L3)),
-    COMBO(combo4, TO(_L3)),
-    COMBO(combo_caps, KC_CAPS),
+    COMBO(combo1, TO(_L3)),
+    COMBO(combo2, KC_CAPS),
     COMBO(combo_numpad, TO(_L2))
 };
